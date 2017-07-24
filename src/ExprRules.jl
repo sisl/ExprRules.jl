@@ -2,7 +2,7 @@ __precompile__()
 
 module ExprRules
 
-using TreeView
+import TreeView: walk_tree
 using StatsBase
 
 export
@@ -13,7 +13,8 @@ export
         @ruleset,
         isterminal,
         get_executable,
-        sample
+        sample,
+        numnodes
 
 """
 isterminal(rule::Any, types::AbstractVector{Symbol})
@@ -73,6 +74,18 @@ end
 RuleNode(ind::Int) = RuleNode(ind, RuleNode[])
 
 """
+Return the number of vertices in the tree rooted at root.
+"""
+function Base.length(root::RuleNode)
+    retval = 1
+    for c in root.children
+        retval += length(c)
+    end
+    return retval
+end
+
+
+"""
     get_executable(rulenode::RuleNode, ruleset::RuleSet)
 
 INSERT DOCS HERE
@@ -105,22 +118,12 @@ function get_executable(rulenode::RuleNode, ruleset::RuleSet)
 end
 
 Core.eval(rulenode::RuleNode, ruleset::RuleSet) = eval(Main, get_executable(rulenode, ruleset))
-Base.show(io::IO, rulenode::RuleNode) =
-function Base.display(rulenode::RuleNode)
+function Base.display(rulenode::RuleNode, ruleset::RuleSet)
     root = get_executable(rulenode, ruleset)
     if isa(root, Expr)
         walk_tree(root)
     else
         root
-    end
-end
-function Base.show(io::IO, ::MIME"text/html", rulenode::RuleNode)
-    if isdefined(Main, :IJulia)
-        # If IJulia is present, display using TreeView
-        display(rulenode)
-    else
-        # not, dump the expression
-        dump(get_executable(rulenode, ruleset))
     end
 end
 
