@@ -206,6 +206,21 @@ struct NodeLoc
 end
 
 """
+    get(root::RuleNode, loc::NodeLoc)
+
+Obtain the node pointed to by loc.
+"""
+function Base.get(root::RuleNode, loc::NodeLoc)
+    parent, i = loc.parent, loc.i
+    if loc.i > 0
+        return parent.children[i]
+    else
+        return root
+    end
+end
+
+
+"""
     insert!(loc::NodeLoc, rulenode::RuleNode)
 
 Replaces the subtree pointed to by loc with the given rulenode.

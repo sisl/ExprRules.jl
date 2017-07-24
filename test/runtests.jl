@@ -35,5 +35,6 @@ eval(rulenode, ruleset)
 
 sample(rulenode)
 sample(rulenode, :Real, ruleset)
-sample(NodeLoc, rulenode)
-insert!(rulenode, sample(NodeLoc, rulenode), rand(RuleNode, ruleset, :Real, 3))
+loc = sample(NodeLoc, rulenode)
+get(rulenode, loc)
+insert!(rulenode, loc, rand(RuleNode, ruleset, :Real, 3))
