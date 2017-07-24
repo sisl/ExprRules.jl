@@ -11,6 +11,7 @@ export
         NodeLoc,
 
         @ruleset,
+        @digits,
         isterminal,
         get_executable,
         sample,
