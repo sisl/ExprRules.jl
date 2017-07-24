@@ -231,7 +231,6 @@ Replaces the subtree pointed to by loc with the given rulenode.
 function Base.insert!(root::RuleNode, loc::NodeLoc, rulenode::RuleNode)
     parent, i = loc.parent, loc.i
     if loc.i > 0
-        typ = ruleset.types[parent.children[i].ind]
         parent.children[i] = rulenode
     else
         root = rulenode
