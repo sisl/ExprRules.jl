@@ -35,6 +35,14 @@ function isterminal(rule::Any, types::AbstractVector{Symbol})
 end
 
 """
+iseval(rule::Any)
+
+Returns true if the rule is the special evaluate immediately function, i.e., _()
+"""
+iseval(rule) = false 
+iseval(rule::Expr) = (rule.head == :call && rule.args[1] == :_)
+
+"""
 TODO: docs
 - generated via macro
 - maybe have an example of use
@@ -43,6 +51,7 @@ struct RuleSet
     rules::Vector{Any}
     types::Vector{Symbol}
     isterminal::BitVector
+    iseval::BitVector
     bytype::Dict{Symbol,Vector{Int}}
 end
 macro ruleset(ex)
@@ -60,7 +69,8 @@ macro ruleset(ex)
     end
     alltypes = collect(keys(bytype))
     is_terminal = [isterminal(rule, alltypes) for rule in rules]
-    return RuleSet(rules, types, is_terminal, bytype)
+    is_eval = [iseval(rule) for rule in rules]
+    return RuleSet(rules, types, is_terminal, is_eval, bytype)
 end
 
 """
@@ -70,9 +80,12 @@ INSERT DOCS HERE
 """
 struct RuleNode
     ind::Int # index in ruleset
+    _val::Nullable{Any} #value of _() evals
     children::Vector{RuleNode}
 end
-RuleNode(ind::Int) = RuleNode(ind, RuleNode[])
+RuleNode(ind::Int) = RuleNode(ind, Nullable{Any}(), RuleNode[])
+RuleNode(ind::Int, children::Vector{RuleNode}) = RuleNode(ind, Nullable{Any}(), children)
+RuleNode(ind::Int, _val::Any) = RuleNode(ind, Nullable{Any}(_val), RuleNode[])
 
 """
 Return the number of vertices in the tree rooted at root.
@@ -99,7 +112,8 @@ function _get_executable!(expr::Expr, rulenode::RuleNode, ruleset::RuleSet)
         for (k,arg) in enumerate(ex.args)
             if haskey(ruleset.bytype, arg)
                 child = rulenode.children[j+=1]
-                ex.args[k] = deepcopy(ruleset.rules[child.ind])
+                ex.args[k] = !isnull(child._val) ? 
+                    get(child._val) : deepcopy(ruleset.rules[child.ind])
                 if !ruleset.isterminal[child.ind]
                     _get_executable!(ex.args[k], child, ruleset)
                 end
@@ -111,7 +125,8 @@ function _get_executable!(expr::Expr, rulenode::RuleNode, ruleset::RuleSet)
     return expr
 end
 function get_executable(rulenode::RuleNode, ruleset::RuleSet)
-    root = deepcopy(ruleset.rules[rulenode.ind])
+    root = !isnull(rulenode._val) ? 
+        get(rulenode._val) : deepcopy(ruleset.rules[rulenode.ind])
     if !ruleset.isterminal[rulenode.ind] # not terminal
         _get_executable!(root, rulenode, ruleset)
     end
@@ -140,7 +155,9 @@ function Base.rand(::Type{RuleNode}, ruleset::RuleSet, typ::Symbol, max_depth::I
         StatsBase.sample([rules[i] for i in 1 : length(rules)]) :
         StatsBase.sample([rules[i] for i in 1 : length(rules) if ruleset.isterminal[i]])
 
-    rulenode = RuleNode(rule_index)
+    rulenode = ruleset.iseval[rule_index] ?
+        RuleNode(rule_index, eval(Main, ruleset.rules[rule_index].args[2])) :
+        RuleNode(rule_index) 
 
     if !ruleset.isterminal[rule_index]
         # add children
