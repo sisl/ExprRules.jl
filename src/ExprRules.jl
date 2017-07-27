@@ -281,4 +281,32 @@ function StatsBase.sample(::Type{NodeLoc}, root::RuleNode)
     return selected
 end
 
+"""
+    sample(::Type{NodeLoc}, root::RuleNode, typ::Symbol, ruleset::RuleSet)
+
+Selects a uniformly random node in the tree of a given type, specified using its parent such that the subtree can be replaced.
+Returns a tuple (rulenode::RuleNode, i::Int) where rulenode is the parent RuleNode and i is the index
+in rulenode.children corresponding to the selected node.
+If the root node is selected, rulenode is the root node and i is 0.
+"""
+function StatsBase.sample(::Type{NodeLoc}, root::RuleNode, typ::Symbol, ruleset::RuleSet)
+    i = 1
+    selected = NodeLoc(root, 0)
+    stack = RuleNode[root]
+    while !isempty(stack)
+        node = pop!(stack)
+        if ruleset.types[node.ind] == typ
+            for (j,child) in enumerate(node.children)
+                i += 1
+                if rand() ≤ 1/i
+                    selected = NodeLoc(node, j)
+                end
+                append!(stack, child.children)
+            end
+        end
+    end
+    ruleset.types[get(root,selected).ind] == typ || error("type $typ not found in RuleNode")
+    return selected
+end
+
 end # module
