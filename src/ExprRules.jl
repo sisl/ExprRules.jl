@@ -12,6 +12,7 @@ export
 
         @ruleset,
         @digits,
+        depth,
         isterminal,
         get_executable,
         sample,
@@ -39,7 +40,7 @@ iseval(rule::Any)
 
 Returns true if the rule is the special evaluate immediately function, i.e., _()
 """
-iseval(rule) = false 
+iseval(rule) = false
 iseval(rule::Expr) = (rule.head == :call && rule.args[1] == :_)
 
 """
@@ -82,7 +83,7 @@ function _parse_rule!(v::Vector{Any}, ex::Expr)
          terms = length(ex.args) == 2 ?
             collect(eval(Main,ex.args[2])) :    #|(a:c) case
             ex.args[2:end]                      #a|b|c case
-        for t in terms 
+        for t in terms
             _parse_rule!(v, t)
         end
     else
@@ -123,6 +124,13 @@ function Base.length(root::RuleNode)
     end
     return retval
 end
+function depth(root::RuleNode)
+    retval = 1
+    for c in root.children
+        retval = max(retval, depth(c)+1)
+    end
+    return retval
+end
 
 
 """
@@ -138,7 +146,7 @@ function _get_executable!(expr::Expr, rulenode::RuleNode, ruleset::RuleSet)
         for (k,arg) in enumerate(ex.args)
             if haskey(ruleset.bytype, arg)
                 child = rulenode.children[j+=1]
-                ex.args[k] = !isnull(child._val) ? 
+                ex.args[k] = !isnull(child._val) ?
                     get(child._val) : deepcopy(ruleset.rules[child.ind])
                 if !ruleset.isterminal[child.ind]
                     _get_executable!(ex.args[k], child, ruleset)
@@ -151,7 +159,7 @@ function _get_executable!(expr::Expr, rulenode::RuleNode, ruleset::RuleSet)
     return expr
 end
 function get_executable(rulenode::RuleNode, ruleset::RuleSet)
-    root = !isnull(rulenode._val) ? 
+    root = !isnull(rulenode._val) ?
         get(rulenode._val) : deepcopy(ruleset.rules[rulenode.ind])
     if !ruleset.isterminal[rulenode.ind] # not terminal
         _get_executable!(root, rulenode, ruleset)
@@ -183,7 +191,7 @@ function Base.rand(::Type{RuleNode}, ruleset::RuleSet, typ::Symbol, max_depth::I
 
     rulenode = ruleset.iseval[rule_index] ?
         RuleNode(rule_index, eval(Main, ruleset.rules[rule_index].args[2])) :
-        RuleNode(rule_index) 
+        RuleNode(rule_index)
 
     if !ruleset.isterminal[rule_index]
         # add children
