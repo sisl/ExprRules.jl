@@ -74,6 +74,14 @@ struct RuleNode
 end
 RuleNode(ind::Int) = RuleNode(ind, RuleNode[])
 
+function Base.hash(node::RuleNode, h::UInt=zero(UInt))
+    retval = hash(node.ind, h)
+    for child in node.children
+        retval = hash(child, retval)
+    end
+    return retval
+end
+
 """
 Return the number of vertices in the tree rooted at root.
 """
