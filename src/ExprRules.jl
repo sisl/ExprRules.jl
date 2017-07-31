@@ -35,6 +35,14 @@ function isterminal(rule::Any, types::AbstractVector{Symbol})
 end
 
 """
+iseval(rule::Any)
+
+Returns true if the rule is the special evaluate immediately function, i.e., _()
+"""
+iseval(rule) = false 
+iseval(rule::Expr) = (rule.head == :call && rule.args[1] == :_)
+
+"""
 TODO: docs
 - generated via macro
 - maybe have an example of use
@@ -43,6 +51,7 @@ struct RuleSet
     rules::Vector{Any}
     types::Vector{Symbol}
     isterminal::BitVector
+    iseval::BitVector
     bytype::Dict{Symbol,Vector{Int}}
 end
 macro ruleset(ex)
@@ -52,16 +61,35 @@ macro ruleset(ex)
     for e in ex.args
         if e.head == :(=)
             s = e.args[1] # name of return type
-            r = e.args[2] # expression?
-            push!(rules, r)
-            push!(types, s)
-            bytype[s] = push!(get(bytype, s, Int[]), length(rules))
+            rule = e.args[2] # expression?
+            rvec = Any[]
+            _parse_rule!(rvec, rule)
+            for r in rvec
+                push!(rules, r)
+                push!(types, s)
+                bytype[s] = push!(get(bytype, s, Int[]), length(rules))
+            end
         end
     end
     alltypes = collect(keys(bytype))
     is_terminal = [isterminal(rule, alltypes) for rule in rules]
-    return RuleSet(rules, types, is_terminal, bytype)
+    is_eval = [iseval(rule) for rule in rules]
+    return RuleSet(rules, types, is_terminal, is_eval, bytype)
 end
+_parse_rule!(v::Vector{Any}, r) = push!(v, r)
+function _parse_rule!(v::Vector{Any}, ex::Expr)
+    if ex.head == :call && ex.args[1] == :|
+         terms = length(ex.args) == 2 ?
+            collect(eval(Main,ex.args[2])) :    #|(a:c) case
+            ex.args[2:end]                      #a|b|c case
+        for t in terms 
+            _parse_rule!(v, t)
+        end
+    else
+        push!(v, ex)
+    end
+end
+
 
 """
     RuleNode
@@ -70,9 +98,12 @@ INSERT DOCS HERE
 """
 struct RuleNode
     ind::Int # index in ruleset
+    _val::Nullable{Any} #value of _() evals
     children::Vector{RuleNode}
 end
-RuleNode(ind::Int) = RuleNode(ind, RuleNode[])
+RuleNode(ind::Int) = RuleNode(ind, Nullable{Any}(), RuleNode[])
+RuleNode(ind::Int, children::Vector{RuleNode}) = RuleNode(ind, Nullable{Any}(), children)
+RuleNode(ind::Int, _val::Any) = RuleNode(ind, Nullable{Any}(_val), RuleNode[])
 
 function Base.hash(node::RuleNode, h::UInt=zero(UInt))
     retval = hash(node.ind, h)
@@ -107,7 +138,8 @@ function _get_executable!(expr::Expr, rulenode::RuleNode, ruleset::RuleSet)
         for (k,arg) in enumerate(ex.args)
             if haskey(ruleset.bytype, arg)
                 child = rulenode.children[j+=1]
-                ex.args[k] = deepcopy(ruleset.rules[child.ind])
+                ex.args[k] = !isnull(child._val) ? 
+                    get(child._val) : deepcopy(ruleset.rules[child.ind])
                 if !ruleset.isterminal[child.ind]
                     _get_executable!(ex.args[k], child, ruleset)
                 end
@@ -119,7 +151,8 @@ function _get_executable!(expr::Expr, rulenode::RuleNode, ruleset::RuleSet)
     return expr
 end
 function get_executable(rulenode::RuleNode, ruleset::RuleSet)
-    root = deepcopy(ruleset.rules[rulenode.ind])
+    root = !isnull(rulenode._val) ? 
+        get(rulenode._val) : deepcopy(ruleset.rules[rulenode.ind])
     if !ruleset.isterminal[rulenode.ind] # not terminal
         _get_executable!(root, rulenode, ruleset)
     end
@@ -148,7 +181,9 @@ function Base.rand(::Type{RuleNode}, ruleset::RuleSet, typ::Symbol, max_depth::I
         StatsBase.sample([rules[i] for i in 1 : length(rules)]) :
         StatsBase.sample([rules[i] for i in 1 : length(rules) if ruleset.isterminal[i]])
 
-    rulenode = RuleNode(rule_index)
+    rulenode = ruleset.iseval[rule_index] ?
+        RuleNode(rule_index, eval(Main, ruleset.rules[rule_index].args[2])) :
+        RuleNode(rule_index) 
 
     if !ruleset.isterminal[rule_index]
         # add children
@@ -269,6 +304,34 @@ function StatsBase.sample(::Type{NodeLoc}, root::RuleNode)
             append!(stack, child.children)
         end
     end
+    return selected
+end
+
+"""
+    sample(::Type{NodeLoc}, root::RuleNode, typ::Symbol, ruleset::RuleSet)
+
+Selects a uniformly random node in the tree of a given type, specified using its parent such that the subtree can be replaced.
+Returns a tuple (rulenode::RuleNode, i::Int) where rulenode is the parent RuleNode and i is the index
+in rulenode.children corresponding to the selected node.
+If the root node is selected, rulenode is the root node and i is 0.
+"""
+function StatsBase.sample(::Type{NodeLoc}, root::RuleNode, typ::Symbol, ruleset::RuleSet)
+    i = 1
+    selected = NodeLoc(root, 0)
+    stack = RuleNode[root]
+    while !isempty(stack)
+        node = pop!(stack)
+        if ruleset.types[node.ind] == typ
+            for (j,child) in enumerate(node.children)
+                i += 1
+                if rand() ≤ 1/i
+                    selected = NodeLoc(node, j)
+                end
+                append!(stack, child.children)
+            end
+        end
+    end
+    ruleset.types[get(root,selected).ind] == typ || error("type $typ not found in RuleNode")
     return selected
 end
 
