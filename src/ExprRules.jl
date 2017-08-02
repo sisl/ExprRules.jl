@@ -14,6 +14,7 @@ export
         @digits,
         depth,
         isterminal,
+        nonterminals,
         get_executable,
         sample,
         numnodes
@@ -43,17 +44,30 @@ Returns true if the rule is the special evaluate immediately function, i.e., _()
 iseval(rule) = false
 iseval(rule::Expr) = (rule.head == :call && rule.args[1] == :_)
 
+function get_childtypes(rule::Any, types::AbstractVector{Symbol})
+    retval = Symbol[]
+    if isa(rule, Expr)
+        for arg in rule.args
+            append!(retval, get_childtypes(arg, types))
+        end
+    elseif rule ∈ types
+        push!(retval, rule)
+    end
+    return retval
+end
+
 """
 TODO: docs
 - generated via macro
 - maybe have an example of use
 """
 struct RuleSet
-    rules::Vector{Any}
-    types::Vector{Symbol}
-    isterminal::BitVector
-    iseval::BitVector
-    bytype::Dict{Symbol,Vector{Int}}
+    rules::Vector{Any}    # list of RHS of rules (subexpressions)
+    types::Vector{Symbol} # list of LHS of rules (types, all symbols)
+    isterminal::BitVector # whether rule i is terminal
+    iseval::BitVector     # whether rule i is an eval rule
+    bytype::Dict{Symbol,Vector{Int}}   # maps type to all rules of said type
+    childtypes::Vector{Vector{Symbol}} # list of types of the children for each rule. Empty if terminal
 end
 macro ruleset(ex)
     rules = Any[]
@@ -75,7 +89,8 @@ macro ruleset(ex)
     alltypes = collect(keys(bytype))
     is_terminal = [isterminal(rule, alltypes) for rule in rules]
     is_eval = [iseval(rule) for rule in rules]
-    return RuleSet(rules, types, is_terminal, is_eval, bytype)
+    childtypes = [get_childtypes(rule, alltypes) for rule in rules]
+    return RuleSet(rules, types, is_terminal, is_eval, bytype, childtypes)
 end
 _parse_rule!(v::Vector{Any}, r) = push!(v, r)
 function _parse_rule!(v::Vector{Any}, ex::Expr)
@@ -90,6 +105,8 @@ function _parse_rule!(v::Vector{Any}, ex::Expr)
         push!(v, ex)
     end
 end
+
+nonterminals(ruleset::RuleSet) = collect(keys(ruleset.bytype))
 
 
 """
@@ -106,6 +123,18 @@ RuleNode(ind::Int) = RuleNode(ind, Nullable{Any}(), RuleNode[])
 RuleNode(ind::Int, children::Vector{RuleNode}) = RuleNode(ind, Nullable{Any}(), children)
 RuleNode(ind::Int, _val::Any) = RuleNode(ind, Nullable{Any}(_val), RuleNode[])
 
+function Base.isequal(A::RuleNode, B::RuleNode)
+    if A.ind != B.ind || A._val != B._val
+        return false
+    else
+        for (a,b) in zip(A.children, B.children)
+            if !isequal(a, b)
+                return false
+            end
+        end
+        return true
+    end
+end
 function Base.hash(node::RuleNode, h::UInt=zero(UInt))
     retval = hash(node.ind, h)
     for child in node.children

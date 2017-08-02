@@ -5,15 +5,15 @@ using Base.Test
 TESTS NEED TO BE MORE THOROUGHLY DEFINED
 =#
 
-let
-    ruleset = @ruleset begin
-        R = I
-        I = 1
-    end
+# let
+#     ruleset = @ruleset begin
+#         R = I
+#         I = 1
+#     end
 
-    rulenode = RuleNode(1, [RuleNode(2)])
-    get_executable(rulenode, ruleset)
-end
+#     rulenode = RuleNode(1, [RuleNode(2)])
+#     get_executable(rulenode, ruleset)
+# end
 
 srand(0)
 
@@ -31,6 +31,22 @@ ruleset = @ruleset begin
     Real = 2 / (1 + x)
     Real = 2 / (1 + Real)
 end
+
+@test ruleset.childtypes == [
+    Symbol[],
+    Symbol[],
+    [:Real, :Real],
+    Symbol[],
+    Symbol[],
+    [:Real],
+    [:Real, :Real],
+    [:Real, :Real],
+    Symbol[],
+    [:Bool, :Real, :Real],
+    Symbol[],
+    [:Real],
+]
+
 
 rulenode = RuleNode(3, [RuleNode(2), RuleNode(1)])
 @test length(rulenode) == 3
