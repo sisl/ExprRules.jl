@@ -223,16 +223,22 @@ function Base.rand(::Type{RuleNode}, ruleset::RuleSet, typ::Symbol, max_depth::I
         RuleNode(rule_index)
 
     if !ruleset.isterminal[rule_index]
-        # add children
         for arg in ruleset.rules[rule_index].args
-            if haskey(ruleset.bytype, arg)
-                child = rand(RuleNode, ruleset, arg, max_depth-1)
-                push!(rulenode.children, child)
-            end
+            _add_children!(rulenode, ruleset, arg, max_depth-1) 
         end
     end
-
-    return rulenode
+    rulenode
+end
+function _add_children!(rulenode::RuleNode, ruleset::RuleSet, arg, max_depth::Int)
+    if haskey(ruleset.bytype, arg)
+        child = rand(RuleNode, ruleset, arg, max_depth-1)
+        push!(rulenode.children, child)
+    end
+end
+function _add_children!(rulenode::RuleNode, ruleset::RuleSet, ex::Expr, max_depth::Int) 
+    for arg in ex.args
+        _add_children!(rulenode, ruleset, arg, max_depth)
+    end
 end
 
 """
