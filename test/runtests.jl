@@ -5,15 +5,15 @@ using Base.Test
 TESTS NEED TO BE MORE THOROUGHLY DEFINED
 =#
 
-# let
-#     ruleset = @ruleset begin
-#         R = I
-#         I = 1
-#     end
+let
+    ruleset = @ruleset begin
+        R = I
+        I = 1
+    end
 
-#     rulenode = RuleNode(1, [RuleNode(2)])
-#     get_executable(rulenode, ruleset)
-# end
+    rulenode = RuleNode(1, [RuleNode(2)])
+    get_executable(rulenode, ruleset)
+end
 
 srand(0)
 

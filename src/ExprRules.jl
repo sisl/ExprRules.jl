@@ -167,7 +167,7 @@ end
 
 INSERT DOCS HERE
 """
-function _get_executable!(expr::Expr, rulenode::RuleNode, ruleset::RuleSet)
+function _get_executable(expr::Expr, rulenode::RuleNode, ruleset::RuleSet)
     j = 0
     stack = Expr[expr]
     while !isempty(stack)
@@ -178,7 +178,7 @@ function _get_executable!(expr::Expr, rulenode::RuleNode, ruleset::RuleSet)
                 ex.args[k] = !isnull(child._val) ?
                     get(child._val) : deepcopy(ruleset.rules[child.ind])
                 if !ruleset.isterminal[child.ind]
-                    _get_executable!(ex.args[k], child, ruleset)
+                    ex.args[k] = _get_executable(ex.args[k], child, ruleset)
                 end
             elseif isa(arg, Expr)
                 push!(stack, arg)
@@ -187,11 +187,23 @@ function _get_executable!(expr::Expr, rulenode::RuleNode, ruleset::RuleSet)
     end
     return expr
 end
+function _get_executable(typ::Symbol, rulenode::RuleNode, ruleset::RuleSet)
+    retval = typ
+    if haskey(ruleset.bytype, typ)
+        child = rulenode.children[1]
+        retval = !isnull(child._val) ?
+            get(child._val) : deepcopy(ruleset.rules[child.ind])
+        if !ruleset.isterminal[child.ind]
+            retval = _get_executable(retval, child, ruleset)
+        end
+    end
+    retval
+end
 function get_executable(rulenode::RuleNode, ruleset::RuleSet)
     root = !isnull(rulenode._val) ?
         get(rulenode._val) : deepcopy(ruleset.rules[rulenode.ind])
     if !ruleset.isterminal[rulenode.ind] # not terminal
-        _get_executable!(root, rulenode, ruleset)
+        root = _get_executable(root, rulenode, ruleset)
     end
     return root
 end
