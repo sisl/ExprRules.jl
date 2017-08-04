@@ -14,6 +14,8 @@ export
         @digits,
         depth,
         isterminal,
+        return_type,
+        child_types,
         nonterminals,
         get_executable,
         sample,
@@ -108,6 +110,9 @@ function _parse_rule!(v::Vector{Any}, ex::Expr)
 end
 
 nonterminals(ruleset::RuleSet) = collect(keys(ruleset.bytype))
+return_type(ruleset::RuleSet, rule_index::Int) = ruleset.types[rule_index]
+child_types(ruleset::RuleSet, rule_index::Int) = ruleset.childtypes[rule_index]
+isterminal(ruleset::RuleSet, rule_index::Int) = ruleset.isterminal[rule_index]
 
 
 """
@@ -123,6 +128,10 @@ end
 RuleNode(ind::Int) = RuleNode(ind, Nullable{Any}(), RuleNode[])
 RuleNode(ind::Int, children::Vector{RuleNode}) = RuleNode(ind, Nullable{Any}(), children)
 RuleNode(ind::Int, _val::Any) = RuleNode(ind, Nullable{Any}(_val), RuleNode[])
+
+return_type(ruleset::RuleSet, node::RuleNode) = ruleset.types[node.ind]
+child_types(ruleset::RuleSet, node::RuleNode) = ruleset.childtypes[node.ind]
+isterminal(ruleset::RuleSet,  node::RuleNode) = ruleset.isterminal[node.ind]
 
 function Base.isequal(A::RuleNode, B::RuleNode)
     if A.ind != B.ind || A._val != B._val
