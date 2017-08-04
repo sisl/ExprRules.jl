@@ -17,7 +17,8 @@ export
         nonterminals,
         get_executable,
         sample,
-        numnodes
+        numnodes,
+        root_node_loc
 
 """
 isterminal(rule::Any, types::AbstractVector{Symbol})
@@ -236,7 +237,7 @@ function Base.rand(::Type{RuleNode}, ruleset::RuleSet, typ::Symbol, max_depth::I
 
     if !ruleset.isterminal[rule_index]
         for arg in ruleset.rules[rule_index].args
-            _add_children!(rulenode, ruleset, arg, max_depth-1) 
+            _add_children!(rulenode, ruleset, arg, max_depth-1)
         end
     end
     rulenode
@@ -247,7 +248,7 @@ function _add_children!(rulenode::RuleNode, ruleset::RuleSet, arg, max_depth::In
         push!(rulenode.children, child)
     end
 end
-function _add_children!(rulenode::RuleNode, ruleset::RuleSet, ex::Expr, max_depth::Int) 
+function _add_children!(rulenode::RuleNode, ruleset::RuleSet, ex::Expr, max_depth::Int)
     for arg in ex.args
         _add_children!(rulenode, ruleset, arg, max_depth)
     end
@@ -301,11 +302,13 @@ end
 
 A helper struct that points to a node in the tree via its parent such that the child can be easily
 swapped out.
+If i is 0 the node pointed to is the root node and parent is the node itself.
 """
 struct NodeLoc
     parent::RuleNode
     i::Int
 end
+root_node_loc(root::RuleNode) = NodeLoc(root, 0)
 
 """
     get(root::RuleNode, loc::NodeLoc)
@@ -347,7 +350,7 @@ If the root node is selected, rulenode is the root node and i is 0.
 """
 function StatsBase.sample(::Type{NodeLoc}, root::RuleNode)
     i = 1
-    selected = NodeLoc(root, 0)
+    selected = root_node_loc(root)
     stack = RuleNode[root]
     while !isempty(stack)
         node = pop!(stack)
@@ -372,7 +375,7 @@ If the root node is selected, rulenode is the root node and i is 0.
 """
 function StatsBase.sample(::Type{NodeLoc}, root::RuleNode, typ::Symbol, ruleset::RuleSet)
     i = 1
-    selected = NodeLoc(root, 0)
+    selected = root_node_loc(root)
     stack = RuleNode[root]
     while !isempty(stack)
         node = pop!(stack)
