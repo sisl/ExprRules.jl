@@ -138,7 +138,11 @@ isterminal(ruleset::RuleSet, node::RuleNode) = ruleset.isterminal[node.ind]
 nchildren(ruleset::RuleSet, node::RuleNode) = length(child_types(ruleset, node))
 
 function Base.isequal(A::RuleNode, B::RuleNode)
-    if A.ind != B.ind || A._val != B._val
+    if A.ind != B.ind ||
+      (!isnull(A._val) && isnull(B._val)) ||
+      ( isnull(A._val) && !isnull(B._val)) ||
+      (!isnull(A._val) && !isnull(B._val) && A._val == B._val)
+
         return false
     else
         for (a,b) in zip(A.children, B.children)
