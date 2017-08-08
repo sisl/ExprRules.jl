@@ -12,14 +12,15 @@ export
 
         @ruleset,
         @digits,
+        max_arity,
         depth,
         isterminal,
         return_type,
+        nchildren,
         child_types,
         nonterminals,
         get_executable,
         sample,
-        numnodes,
         root_node_loc
 
 """
@@ -113,6 +114,8 @@ nonterminals(ruleset::RuleSet) = collect(keys(ruleset.bytype))
 return_type(ruleset::RuleSet, rule_index::Int) = ruleset.types[rule_index]
 child_types(ruleset::RuleSet, rule_index::Int) = ruleset.childtypes[rule_index]
 isterminal(ruleset::RuleSet, rule_index::Int) = ruleset.isterminal[rule_index]
+nchildren(ruleset::RuleSet, rule_index::Int) = length(ruleset.childtypes[rule_index])
+max_arity(ruleset::RuleSet) = maximum(length(cs) for cs in ruleset.childtypes)
 
 
 """
@@ -131,7 +134,8 @@ RuleNode(ind::Int, _val::Any) = RuleNode(ind, Nullable{Any}(_val), RuleNode[])
 
 return_type(ruleset::RuleSet, node::RuleNode) = ruleset.types[node.ind]
 child_types(ruleset::RuleSet, node::RuleNode) = ruleset.childtypes[node.ind]
-isterminal(ruleset::RuleSet,  node::RuleNode) = ruleset.isterminal[node.ind]
+isterminal(ruleset::RuleSet, node::RuleNode) = ruleset.isterminal[node.ind]
+nchildren(ruleset::RuleSet, node::RuleNode) = length(child_types(ruleset, node))
 
 function Base.isequal(A::RuleNode, B::RuleNode)
     if A.ind != B.ind || A._val != B._val
