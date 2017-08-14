@@ -245,8 +245,8 @@ function Base.rand(::Type{RuleNode}, ruleset::RuleSet, typ::Symbol, max_depth::I
 
     rules = ruleset.bytype[typ]
     rule_index = max_depth > 1 ?
-        StatsBase.sample([rules[i] for i in 1 : length(rules)]) :
-        StatsBase.sample([rules[i] for i in 1 : length(rules) if isterminal(ruleset, rules[i])])
+        StatsBase.sample(rules) :
+        StatsBase.sample([r for r in rules if isterminal(ruleset, r)])
 
     rulenode = ruleset.iseval[rule_index] ?
         RuleNode(rule_index, eval(Main, ruleset.rules[rule_index].args[2])) :
