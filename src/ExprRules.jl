@@ -161,6 +161,19 @@ function Base.hash(node::RuleNode, h::UInt=zero(UInt))
     return retval
 end
 
+function Base.show(io::IO, node::RuleNode; separator=",", last_child::Bool=false)
+    print(node.ind)
+    if !isempty(node.children)
+        print("{")
+        for (i,c) in enumerate(node.children)
+            show(io, c, separator=separator, last_child=(i == length(node.children)))
+        end
+        print("}")
+    elseif !last_child
+        print(separator)
+    end
+end
+
 """
 Return the number of vertices in the tree rooted at root.
 """
@@ -242,33 +255,21 @@ end
 Generates a random RuleNode of return type typ and maximum depth max_depth.
 """
 function Base.rand(::Type{RuleNode}, ruleset::RuleSet, typ::Symbol, max_depth::Int=10)
-
     rules = ruleset.bytype[typ]
     rule_index = max_depth > 1 ?
         StatsBase.sample([rules[i] for i in 1 : length(rules)]) :
-        StatsBase.sample([rules[i] for i in 1 : length(rules) if ruleset.isterminal[i]])
+        StatsBase.sample([rules[i] for i in 1 : length(rules) if ruleset.isterminal[rules[i]]])
 
     rulenode = ruleset.iseval[rule_index] ?
         RuleNode(rule_index, eval(Main, ruleset.rules[rule_index].args[2])) :
         RuleNode(rule_index)
 
     if !ruleset.isterminal[rule_index]
-        for arg in ruleset.rules[rule_index].args
-            _add_children!(rulenode, ruleset, arg, max_depth-1)
+        for ch in child_types(ruleset, rule_index)
+            push!(rulenode.children, rand(RuleNode, ruleset, ch, max_depth-1))
         end
     end
-    rulenode
-end
-function _add_children!(rulenode::RuleNode, ruleset::RuleSet, arg, max_depth::Int)
-    if haskey(ruleset.bytype, arg)
-        child = rand(RuleNode, ruleset, arg, max_depth-1)
-        push!(rulenode.children, child)
-    end
-end
-function _add_children!(rulenode::RuleNode, ruleset::RuleSet, ex::Expr, max_depth::Int)
-    for arg in ex.args
-        _add_children!(rulenode, ruleset, arg, max_depth)
-    end
+    return rulenode
 end
 
 """
