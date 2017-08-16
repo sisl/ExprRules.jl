@@ -26,6 +26,7 @@ let
     get_executable(rulenode, ruleset)
 end
 
+x = 3
 let
     srand(0)
 
@@ -87,7 +88,6 @@ let
     rulenode = rand(RuleNode, ruleset, :Real, 3)
     hash(rulenode)
 
-    x = 3
     eval(rulenode, ruleset)
 
     sample(rulenode)
