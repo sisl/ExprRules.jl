@@ -24,8 +24,8 @@ let
 
     rulenode = RuleNode(1, [RuleNode(2)])
     get_executable(rulenode, ruleset)
-    @test get_rules(ruleset, :R) == ruleset.bytype[:R]
-    @test get_rules(ruleset, :I) == ruleset.bytype[:I]
+    @test ruleset[:R] == ruleset.bytype[:R]
+    @test ruleset[:I] == ruleset.bytype[:I]
     @test contains_returntype(rulenode, ruleset, :R)
     @test contains_returntype(rulenode, ruleset, :I)
     @test !contains_returntype(rulenode, ruleset, :B)
