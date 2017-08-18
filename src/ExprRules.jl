@@ -12,6 +12,7 @@ export
 
         @ruleset,
         @digits,
+        get_rules,
         max_arity,
         depth,
         isterminal,
@@ -112,6 +113,7 @@ function _parse_rule!(v::Vector{Any}, ex::Expr)
 end
 
 nonterminals(ruleset::RuleSet) = collect(keys(ruleset.bytype))
+get_rules(ruleset::RuleSet, typ::Symbol) = ruleset.bytype[typ]
 return_type(ruleset::RuleSet, rule_index::Int) = ruleset.types[rule_index]
 child_types(ruleset::RuleSet, rule_index::Int) = ruleset.childtypes[rule_index]
 isterminal(ruleset::RuleSet, rule_index::Int) = ruleset.isterminal[rule_index]

@@ -24,6 +24,8 @@ let
 
     rulenode = RuleNode(1, [RuleNode(2)])
     get_executable(rulenode, ruleset)
+    @test get_rules(ruleset, :R) == ruleset.bytype[:R]
+    @test get_rules(ruleset, :I) == ruleset.bytype[:I]
     @test contains_returntype(rulenode, ruleset, :R)
     @test contains_returntype(rulenode, ruleset, :I)
     @test !contains_returntype(rulenode, ruleset, :B)
@@ -130,5 +132,7 @@ let
 
     srand(4)
     rulenode = RuleNode(3, [RuleNode(4), RuleNode(5)])
-    loc = sample(NodeLoc, rulenode, :Real, ruleset)
+    for i in 1 : 10
+        loc = sample(NodeLoc, rulenode, :Real, ruleset)
+    end
 end
