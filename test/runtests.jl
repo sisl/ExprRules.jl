@@ -129,6 +129,6 @@ let
     insert!(rulenode, loc, rand(RuleNode, ruleset, :Real, 3))
 
     srand(4)
-    rulenode = rand(RuleNode, ruleset, :Real)
+    rulenode = RuleNode(3, [RuleNode(4), RuleNode(5)])
     loc = sample(NodeLoc, rulenode, :Real, ruleset)
 end
