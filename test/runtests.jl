@@ -27,6 +27,25 @@ let
     @test contains_returntype(rulenode, ruleset, :R)
     @test contains_returntype(rulenode, ruleset, :I)
     @test !contains_returntype(rulenode, ruleset, :B)
+
+    io = IOBuffer()
+    show(io, rulenode)
+    @test String(take!(io)) == "1{2}"
+
+    display(rulenode, ruleset)
+end
+
+let
+    ruleset = @ruleset begin
+        Real = x
+        Real = Real * Real
+        Real = f(Real)
+        Real = _(Base.rand(1.0:5.0))
+        Real = A | B | g(Real)
+        Real = 1 | 2 | 3
+        Real = |(4:6)
+        Real = |([7,8,9])
+    end
 end
 
 x = 3
@@ -96,9 +115,20 @@ let
 
     eval(rulenode, ruleset)
 
+    srand(0)
     sample(rulenode)
+
+    srand(1)
     sample(rulenode, :Real, ruleset)
+
+    srand(2)
     loc = sample(NodeLoc, rulenode)
     get(rulenode, loc)
+
+    srand(3)
     insert!(rulenode, loc, rand(RuleNode, ruleset, :Real, 3))
+
+    srand(4)
+    rulenode = rand(RuleNode, ruleset, :Real)
+    loc = sample(NodeLoc, rulenode, :Real, ruleset)
 end

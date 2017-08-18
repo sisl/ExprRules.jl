@@ -180,15 +180,15 @@ function Base.hash(node::RuleNode, h::UInt=zero(UInt))
 end
 
 function Base.show(io::IO, node::RuleNode; separator=",", last_child::Bool=false)
-    print(node.ind)
+    print(io, node.ind)
     if !isempty(node.children)
-        print("{")
+        print(io, "{")
         for (i,c) in enumerate(node.children)
             show(io, c, separator=separator, last_child=(i == length(node.children)))
         end
-        print("}")
+        print(io, "}")
     elseif !last_child
-        print(separator)
+        print(io, separator)
     end
 end
 
@@ -226,7 +226,7 @@ function _get_executable(expr::Expr, rulenode::RuleNode, ruleset::RuleSet)
                 child = rulenode.children[j+=1]
                 ex.args[k] = !isnull(child._val) ?
                     get(child._val) : deepcopy(ruleset.rules[child.ind])
-                if !ruleset.isterminal[child.ind]
+                if !isterminal(ruleset, child)
                     ex.args[k] = _get_executable(ex.args[k], child, ruleset)
                 end
             elseif isa(arg, Expr)
