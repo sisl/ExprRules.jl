@@ -24,6 +24,9 @@ let
 
     rulenode = RuleNode(1, [RuleNode(2)])
     get_executable(rulenode, ruleset)
+    @test contains_returntype(rulenode, ruleset, :R)
+    @test contains_returntype(rulenode, ruleset, :I)
+    @test !contains_returntype(rulenode, ruleset, :B)
 end
 
 x = 3
@@ -77,6 +80,9 @@ let
     @test !isequal(rulenode, RuleNode(1))
     @test !isequal(rulenode, RuleNode(3, [RuleNode(1), RuleNode(2)]))
     @test string(get_executable(rulenode, ruleset)) == string(:(x + Base.rand()))
+
+    @test contains_returntype(rulenode, ruleset, :Real)
+    @test !contains_returntype(rulenode, ruleset, :Bool)
 
     rulenode = RuleNode(12, [RuleNode(3, [RuleNode(2), RuleNode(4)])])
     @test length(rulenode) == 4

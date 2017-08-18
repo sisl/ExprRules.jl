@@ -16,6 +16,7 @@ export
         depth,
         isterminal,
         return_type,
+        contains_returntype,
         nchildren,
         child_types,
         nonterminals,
@@ -136,6 +137,23 @@ return_type(ruleset::RuleSet, node::RuleNode) = ruleset.types[node.ind]
 child_types(ruleset::RuleSet, node::RuleNode) = ruleset.childtypes[node.ind]
 isterminal(ruleset::RuleSet, node::RuleNode) = ruleset.isterminal[node.ind]
 nchildren(ruleset::RuleSet, node::RuleNode) = length(child_types(ruleset, node))
+
+"""
+    contains_returntype(node::RuleNode, sym::Symbol)
+
+Returns true if the tree rooted at node contains at least one node with the given return type.
+"""
+function contains_returntype(node::RuleNode, ruleset::RuleSet, sym::Symbol)
+    if return_type(ruleset, node) == sym
+        return true
+    end
+    for c in node.children
+        if contains_returntype(c, ruleset, sym)
+            return true
+        end
+    end
+    return false
+end
 
 function Base.isequal(A::RuleNode, B::RuleNode)
     if A.ind != B.ind ||
