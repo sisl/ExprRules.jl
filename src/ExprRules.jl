@@ -275,7 +275,7 @@ end
 Generates a random RuleNode of return type typ and maximum depth max_depth.
 """
 function Base.rand(::Type{RuleNode}, ruleset::RuleSet, typ::Symbol, max_depth::Int=10)
-    rules = ruleset.bytype[typ]
+    rules = ruleset[typ]
     rule_index = max_depth > 1 ?
         StatsBase.sample(rules) :
         StatsBase.sample([r for r in rules if isterminal(ruleset, r)])
