@@ -10,6 +10,8 @@ export
         RuleNode,
         NodeLoc,
 
+        ExpressionIterator,
+
         @ruleset,
         @digits,
         max_arity,
@@ -430,5 +432,134 @@ function StatsBase.sample(::Type{NodeLoc}, root::RuleNode, typ::Symbol, ruleset:
     ruleset.types[get(root,selected).ind] == typ || error("type $typ not found in RuleNode")
     return selected
 end
+
+###
+
+function _next_state!(node::RuleNode, ruleset::RuleSet, max_depth::Int)
+
+    if max_depth < 1
+        return (node, false) # did not work
+    elseif isterminal(ruleset, node)
+        # do nothing
+        return (node, false) # cannot change leaves
+    else # !isterminal
+        if isempty(node.children)
+            if max_depth ≤ 1
+                return (node,false) # cannot expand
+            end
+
+            # build out the node
+            for c in child_types(ruleset, node)
+
+                worked = false
+                i = 0
+                child = RuleNode(0)
+                child_rules = ruleset[c]
+                while !worked && i < length(child_rules)
+                    i += 1
+                    child = RuleNode(child_rules[i])
+                    worked = true
+                    if !isterminal(ruleset, child)
+                        child, worked = _next_state!(child, ruleset, max_depth-1)
+                    end
+                end
+                if !worked
+                    return (node, false) # did not work
+                end
+                push!(node.children, child)
+            end
+
+            return (node, true)
+        else # not empty
+            # make one change, starting with rightmost child
+            worked = false
+            child_index = length(node.children) + 1
+            while !worked && child_index > 1
+                child_index -= 1
+                child = node.children[child_index]
+
+                child, child_worked = _next_state!(child, ruleset, max_depth-1)
+                while !child_worked
+                    child_type = return_type(ruleset, child)
+                    child_rules = ruleset[child_type]
+                    i = findfirst(child_rules, child.ind)
+                    if i < length(child_rules)
+                        child_worked = true
+                        child = RuleNode(child_rules[i+1])
+                        if !isterminal(ruleset, child)
+                            child, child_worked = _next_state!(child, ruleset, max_depth-1)
+                        end
+                        node.children[child_index] = child
+                    else
+                        break
+                    end
+                end
+
+                if child_worked
+                    worked = true
+
+                    # reset remaining children
+                    for child_index2 in child_index+1 : length(node.children)
+                        c = child_types(ruleset, node)[child_index2]
+                        worked = false
+                        i = 0
+                        child = RuleNode(0)
+                        child_rules = ruleset[c]
+                        while !worked && i < length(child_rules)
+                            i += 1
+                            child = RuleNode(child_rules[i])
+                            worked = true
+                            if !isterminal(ruleset, child)
+                                child, worked = _next_state!(child, ruleset, max_depth-1)
+                            end
+                        end
+                        if !worked
+                            break
+                        end
+                        node.children[child_index2] = child
+                    end
+                end
+            end
+
+            return (node, worked)
+        end
+    end
+end
+
+mutable struct ExpressionIterator
+    ruleset::RuleSet
+    max_depth::Int
+    sym::Symbol
+end
+Base.iteratorsize(::ExpressionIterator) = Base.SizeUnknown()
+Base.eltype(::ExpressionIterator) = RuleNode
+Base.done(iter::ExpressionIterator, state::Tuple{RuleNode,Bool}) = !state[2]
+function Base.start(iter::ExpressionIterator)
+    node = RuleNode(iter.ruleset[iter.sym][1])
+    return _next_state!(node, iter.ruleset, iter.max_depth)
+end
+function Base.next(iter::ExpressionIterator, state::Tuple{RuleNode,Bool})
+    ruleset, max_depth = iter.ruleset, iter.max_depth
+    item = deepcopy(state[1])
+    node, worked = _next_state!(state[1], ruleset, max_depth)
+
+    while !worked
+        # increment root's rule
+        rules = ruleset[iter.sym]
+        i = findfirst(rules, node.ind)
+        if i < length(rules)
+            node, worked = RuleNode(rules[i+1]), true
+            if !isterminal(ruleset, node)
+                node, worked = _next_state!(node, ruleset, max_depth)
+            end
+        else
+            break
+        end
+    end
+
+    state = (node, worked)
+    return (item, state)
+end
+
 
 end # module

@@ -136,3 +136,93 @@ let
         loc = sample(NodeLoc, rulenode, :Real, ruleset)
     end
 end
+
+let
+    ruleset = @ruleset begin
+        R = R + R
+        R = 1
+        R = 2
+    end
+
+
+    node = RuleNode(1)
+    node, worked = ExprRules._next_state!(node, ruleset, 2)
+    @test worked
+    @test isequal(node, RuleNode(1, [RuleNode(2), RuleNode(2)]))
+
+    node = RuleNode(1, [RuleNode(2), RuleNode(2)])
+    node, worked = ExprRules._next_state!(node, ruleset, 2)
+    @test worked
+    @test isequal(node, RuleNode(1, [RuleNode(2), RuleNode(3)]))
+
+    node = RuleNode(1, [RuleNode(2), RuleNode(3)])
+    node, worked = ExprRules._next_state!(node, ruleset, 2)
+    @test worked
+    @test isequal(node, RuleNode(1, [RuleNode(3), RuleNode(2)]))
+
+    node = RuleNode(1, [RuleNode(3), RuleNode(2)])
+    node, worked = ExprRules._next_state!(node, ruleset, 2)
+    @test worked
+    @test isequal(node, RuleNode(1, [RuleNode(3), RuleNode(3)]))
+
+    node = RuleNode(1, [RuleNode(3), RuleNode(3)])
+    node, worked = ExprRules._next_state!(node, ruleset, 2)
+    @test !worked
+
+    ###
+
+    node = RuleNode(1)
+    for testnode in [
+            RuleNode(1, [RuleNode(1, [RuleNode(2), RuleNode(2)]), RuleNode(1, [RuleNode(2), RuleNode(2)])]),
+            RuleNode(1, [RuleNode(1, [RuleNode(2), RuleNode(2)]), RuleNode(1, [RuleNode(2), RuleNode(3)])]),
+            RuleNode(1, [RuleNode(1, [RuleNode(2), RuleNode(2)]), RuleNode(1, [RuleNode(3), RuleNode(2)])]),
+            RuleNode(1, [RuleNode(1, [RuleNode(2), RuleNode(2)]), RuleNode(1, [RuleNode(3), RuleNode(3)])]),
+            RuleNode(1, [RuleNode(1, [RuleNode(2), RuleNode(2)]), RuleNode(2)]),
+            RuleNode(1, [RuleNode(1, [RuleNode(2), RuleNode(2)]), RuleNode(3)]),
+            RuleNode(1, [RuleNode(1, [RuleNode(2), RuleNode(3)]), RuleNode(1, [RuleNode(2), RuleNode(2)])]),
+            RuleNode(1, [RuleNode(1, [RuleNode(2), RuleNode(3)]), RuleNode(1, [RuleNode(2), RuleNode(3)])]),
+        ]
+        node, worked = ExprRules._next_state!(node, ruleset, 3)
+        @test worked
+        @test isequal(node, testnode)
+    end
+
+    ###
+
+    iter = ExpressionIterator(ruleset, 2, :R)
+    state = start(iter)
+    @test !done(iter, state)
+    @test isequal(first(iter), RuleNode(1, [RuleNode(2), RuleNode(2)]))
+    @test all(isequal(a,b) for (a,b) in zip(collect(iter), [
+        RuleNode(1, [RuleNode(2), RuleNode(2)]),
+        RuleNode(1, [RuleNode(2), RuleNode(3)]),
+        RuleNode(1, [RuleNode(3), RuleNode(2)]),
+        RuleNode(1, [RuleNode(3), RuleNode(3)]),
+        RuleNode(2),
+        RuleNode(3),
+    ]))
+end
+
+let
+    ruleset = @ruleset begin
+        R = I | F
+        I = 1 | 2
+        F = F + F
+        F = 1.5
+    end
+
+    iter = ExpressionIterator(ruleset, 2, :R)
+    @test all(isequal(a,b) for (a,b) in zip(collect(iter), [
+        RuleNode(1, [RuleNode(3)]),
+        RuleNode(1, [RuleNode(4)]),
+        RuleNode(2, [RuleNode(6)]),
+    ]))
+
+    iter = ExpressionIterator(ruleset, 3, :R)
+    @test all(isequal(a,b) for (a,b) in zip(collect(iter), [
+        RuleNode(1, [RuleNode(3)]),
+        RuleNode(1, [RuleNode(4)]),
+        RuleNode(2, [RuleNode(5, [RuleNode(6), RuleNode(6)])]),
+        RuleNode(2, [RuleNode(6)]),
+    ]))
+end
