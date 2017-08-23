@@ -160,7 +160,7 @@ function contains_returntype(node::RuleNode, ruleset::RuleSet, sym::Symbol)
     return false
 end
 
-function Base.isequal(A::RuleNode, B::RuleNode)
+function Base.:(==)(A::RuleNode, B::RuleNode)
     if A.ind != B.ind ||
       (!isnull(A._val) && isnull(B._val)) ||
       ( isnull(A._val) && !isnull(B._val)) ||
@@ -537,7 +537,11 @@ Base.eltype(::ExpressionIterator) = RuleNode
 Base.done(iter::ExpressionIterator, state::Tuple{RuleNode,Bool}) = !state[2]
 function Base.start(iter::ExpressionIterator)
     node = RuleNode(iter.ruleset[iter.sym][1])
-    return _next_state!(node, iter.ruleset, iter.max_depth)
+    if isterminal(iter.ruleset, node)
+        return (node, true)
+    else
+        return _next_state!(node, iter.ruleset, iter.max_depth)
+    end
 end
 function Base.next(iter::ExpressionIterator, state::Tuple{RuleNode,Bool})
     ruleset, max_depth = iter.ruleset, iter.max_depth
