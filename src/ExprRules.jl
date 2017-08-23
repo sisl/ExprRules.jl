@@ -24,7 +24,8 @@ export
         nonterminals,
         get_executable,
         sample,
-        root_node_loc
+        root_node_loc,
+        count_expressions
 
 """
 isterminal(rule::Any, types::AbstractVector{Symbol})
@@ -560,6 +561,23 @@ function Base.next(iter::ExpressionIterator, state::Tuple{RuleNode,Bool})
     state = (node, worked)
     return (item, state)
 end
+function count_expressions(ruleset::RuleSet, max_depth::Int, sym::Symbol)
+    retval = 0
+    for root_rule in ruleset[sym]
+        node = RuleNode(root_rule)
+        if isterminal(ruleset, node)
+            retval += 1
+        else
+            node, worked = _next_state!(node, ruleset, max_depth)
+            while worked
+                retval += 1
+                node, worked = _next_state!(node, ruleset, max_depth)
+            end
+        end
+    end
+    return retval
+end
+count_expressions(iter::ExpressionIterator) = count_expressions(iter.ruleset, iter.max_depth, iter.sym)
 
 
 end # module

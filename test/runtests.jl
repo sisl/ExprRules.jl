@@ -144,7 +144,6 @@ let
         R = 2
     end
 
-
     node = RuleNode(1)
     node, worked = ExprRules._next_state!(node, ruleset, 2)
     @test worked
@@ -201,6 +200,7 @@ let
         RuleNode(2),
         RuleNode(3),
     ]))
+    @test count_expressions(ruleset, 2, :R) == 6
 end
 
 let
@@ -225,4 +225,28 @@ let
         RuleNode(2, [RuleNode(5, [RuleNode(6), RuleNode(6)])]),
         RuleNode(2, [RuleNode(6)]),
     ]))
+
+    @test count_expressions(ruleset, 2, :R) == 3
+    @test count_expressions(ruleset, 3, :R) == 4
+end
+
+let
+    ruleset = @ruleset begin
+        R = 1
+        R = 2
+        R = R + R
+    end
+
+    iter = ExpressionIterator(ruleset, 2, :R)
+    @test all(isequal(a,b) for (a,b) in zip(collect(iter), [
+        RuleNode(1),
+        RuleNode(2),
+        RuleNode(3, [RuleNode(1), RuleNode(1)]),
+        RuleNode(3, [RuleNode(1), RuleNode(2)]),
+        RuleNode(3, [RuleNode(2), RuleNode(1)]),
+        RuleNode(3, [RuleNode(2), RuleNode(2)]),
+    ]))
+
+    @test count_expressions(ruleset, 2, :R) == 6
+    @test count_expressions(iter) == 6
 end
