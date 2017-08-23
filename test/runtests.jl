@@ -212,14 +212,14 @@ let
     end
 
     iter = ExpressionIterator(ruleset, 2, :R)
-    @test all(isequal(a,b) for (a,b) in zip(collect(iter), [
+    @test all(a == b for (a,b) in zip(collect(iter), [
         RuleNode(1, [RuleNode(3)]),
         RuleNode(1, [RuleNode(4)]),
         RuleNode(2, [RuleNode(6)]),
     ]))
 
     iter = ExpressionIterator(ruleset, 3, :R)
-    @test all(isequal(a,b) for (a,b) in zip(collect(iter), [
+    @test all(a == b for (a,b) in zip(collect(iter), [
         RuleNode(1, [RuleNode(3)]),
         RuleNode(1, [RuleNode(4)]),
         RuleNode(2, [RuleNode(5, [RuleNode(6), RuleNode(6)])]),
@@ -228,6 +228,7 @@ let
 
     @test count_expressions(ruleset, 2, :R) == 3
     @test count_expressions(ruleset, 3, :R) == 4
+    @test first(iter) == RuleNode(1, [RuleNode(3)])
 end
 
 let
@@ -249,4 +250,5 @@ let
 
     @test count_expressions(ruleset, 2, :R) == 6
     @test count_expressions(iter) == 6
+    @test first(iter) == RuleNode(1)
 end
