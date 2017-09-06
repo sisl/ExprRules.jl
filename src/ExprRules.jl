@@ -4,6 +4,7 @@ module ExprRules
 
 import TreeView: walk_tree
 using StatsBase
+using AbstractTrees
 
 export
         Grammar,
@@ -582,6 +583,10 @@ function count_expressions(grammar::Grammar, max_depth::Int, sym::Symbol)
     return retval
 end
 count_expressions(iter::ExpressionIterator) = count_expressions(iter.grammar, iter.max_depth, iter.sym)
+
+# AbstractTrees interface
+AbstractTrees.children(node::RuleNode) = node.children
+AbstractTrees.printnode(io::IO, node::RuleNode) = print(io, node.ind)
 
 
 end # module
