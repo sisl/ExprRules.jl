@@ -14,7 +14,6 @@ export
         ExpressionIterator,
 
         @grammar,
-        @digits,
         max_arity,
         depth,
         isterminal,
@@ -26,7 +25,8 @@ export
         get_executable,
         sample,
         root_node_loc,
-        count_expressions
+        count_expressions,
+        iseval
 
 """
 isterminal(rule::Any, types::AbstractVector{Symbol})
@@ -121,6 +121,8 @@ nonterminals(grammar::Grammar) = collect(keys(grammar.bytype))
 return_type(grammar::Grammar, rule_index::Int) = grammar.types[rule_index]
 child_types(grammar::Grammar, rule_index::Int) = grammar.childtypes[rule_index]
 isterminal(grammar::Grammar, rule_index::Int) = grammar.isterminal[rule_index]
+iseval(grammar::Grammar) = any(grammar.iseval)
+iseval(grammar::Grammar, index::Int) = grammar.iseval[index]
 nchildren(grammar::Grammar, rule_index::Int) = length(grammar.childtypes[rule_index])
 max_arity(grammar::Grammar) = maximum(length(cs) for cs in grammar.childtypes)
 
@@ -264,6 +266,7 @@ function get_executable(rulenode::RuleNode, grammar::Grammar)
 end
 
 Core.eval(rulenode::RuleNode, grammar::Grammar) = eval(Main, get_executable(rulenode, grammar))
+Core.eval(grammar::Grammar, index::Int) = eval(Main, grammar.rules[index].args[2])
 function Base.display(rulenode::RuleNode, grammar::Grammar)
     root = get_executable(rulenode, grammar)
     if isa(root, Expr)
@@ -284,8 +287,8 @@ function Base.rand(::Type{RuleNode}, grammar::Grammar, typ::Symbol, max_depth::I
         StatsBase.sample(rules) :
         StatsBase.sample([r for r in rules if isterminal(grammar, r)])
 
-    rulenode = grammar.iseval[rule_index] ?
-        RuleNode(rule_index, eval(Main, grammar.rules[rule_index].args[2])) :
+    rulenode = iseval(grammar, rule_index) ?
+        RuleNode(rule_index, eval(grammar, rule_index)) :
         RuleNode(rule_index)
 
     if !grammar.isterminal[rule_index]
@@ -295,6 +298,7 @@ function Base.rand(::Type{RuleNode}, grammar::Grammar, typ::Symbol, max_depth::I
     end
     return rulenode
 end
+
 
 """
     sample(root::RuleNode, typ::Symbol, grammar::Grammar)
@@ -586,7 +590,7 @@ count_expressions(iter::ExpressionIterator) = count_expressions(iter.grammar, it
 
 # AbstractTrees interface
 AbstractTrees.children(node::RuleNode) = node.children
-AbstractTrees.printnode(io::IO, node::RuleNode) = print(io, node.ind)
+AbstractTrees.printnode(io::IO, node::RuleNode) = print(io, tnode.ind)
 
 
 end # module

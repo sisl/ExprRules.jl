@@ -48,6 +48,12 @@ let
         Real = |(4:6)
         Real = |([7,8,9])
     end
+
+    @test iseval(grammar, 1) == false
+    @test iseval(grammar, 2) == false
+    @test iseval(grammar, 3) == false
+    @test iseval(grammar, 4) == true
+    @test iseval(grammar) == true
 end
 
 x = 3
