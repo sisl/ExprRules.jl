@@ -1,6 +1,6 @@
 # ExprRules.jl
 
-Base functions for the generation and optimization of Julia expressions derived from a grammar.
+Base functions for generating and optimizing Julia expressions from a grammar.
 
 ## Usage
 
