@@ -1,19 +1,14 @@
 language: julia
-os:
-  - linux
+sudo: required
+dist: trusty
 julia:
   - 0.6
-  - nightly
-matrix:
-  allow_failures:
-    - julia: nightly
 notifications:
   email: false
 before_install:
-  # - sudo apt-get -qq update
-  - sudo apt-get install git
-script:
-  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.test("ExprRules"; coverage=true)'
+  - sudo apt-get -qq update
+#script: # use the default script section which is equivalent to the following
+#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+#  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("ExprRules"); Pkg.test("ExprRules"; coverage=true)'
 after_success:
   - julia -e 'cd(Pkg.dir("ExprRules")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
