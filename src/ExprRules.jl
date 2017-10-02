@@ -17,6 +17,7 @@ export
         max_arity,
         depth,
         isterminal,
+        iseval,
         return_type,
         contains_returntype,
         nchildren,
@@ -25,11 +26,10 @@ export
         get_executable,
         sample,
         root_node_loc,
-        count_expressions,
-        iseval
+        count_expressions
 
 """
-isterminal(rule::Any, types::AbstractVector{Symbol})
+    isterminal(rule::Any, types::AbstractVector{Symbol})
 
 Returns true if the rule is terminal, ie does not contain any of the types in the provided vector.
 For example, :(x) is terminal, and :(1+1) is terminal, but :(Real + Real) is typically not.
@@ -46,13 +46,18 @@ function isterminal(rule::Any, types::AbstractVector{Symbol})
 end
 
 """
-iseval(rule::Any)
+    iseval(rule::Any)
 
 Returns true if the rule is the special evaluate immediately function, i.e., _()
 """
 iseval(rule) = false
 iseval(rule::Expr) = (rule.head == :call && rule.args[1] == :_)
 
+"""
+    get_childtypes(rule::Any, types::AbstractVector{Symbol})
+
+Returns the child types of a production rule. 
+"""
 function get_childtypes(rule::Any, types::AbstractVector{Symbol})
     retval = Symbol[]
     if isa(rule, Expr)
@@ -66,9 +71,10 @@ function get_childtypes(rule::Any, types::AbstractVector{Symbol})
 end
 
 """
-TODO: docs
-- generated via macro
-- maybe have an example of use
+    Grammar
+
+Represents a grammar and its production rules.  
+Use the @grammar macro to create a Grammar object. 
 """
 struct Grammar
     rules::Vector{Any}    # list of RHS of rules (subexpressions)
@@ -78,6 +84,18 @@ struct Grammar
     bytype::Dict{Symbol,Vector{Int}}   # maps type to all rules of said type
     childtypes::Vector{Vector{Symbol}} # list of types of the children for each rule. Empty if terminal
 end
+"""
+    @grammar
+
+Define a grammar and return it as a Grammar. For example:
+```julia-repl
+grammar = @grammar begin
+    R = x
+    R = 1 | 2
+    R = R + R
+end
+```
+"""
 macro grammar(ex)
     rules = Any[]
     types = Symbol[]
@@ -117,20 +135,67 @@ end
 
 Base.getindex(grammar::Grammar, typ::Symbol) = grammar.bytype[typ]
 
+"""
+    nonterminals(grammar::Grammar)
+
+Returns a list of nonterminals in the grammar.
+"""
 nonterminals(grammar::Grammar) = collect(keys(grammar.bytype))
+
+"""
+    return_type(grammar::Grammar, rule_index::Int)
+
+Returns the type of the production rule at rule_index.
+"""
 return_type(grammar::Grammar, rule_index::Int) = grammar.types[rule_index]
+
+"""
+    child_types(grammar::Grammar, rule_index::Int)
+
+Returns the types of the children (nonterminals) of the production rule at rule_index.
+"""
 child_types(grammar::Grammar, rule_index::Int) = grammar.childtypes[rule_index]
+
+"""
+    isterminal(grammar::Grammar, rule_index::Int)
+
+Returns true if the production rule at rule_index is terminal, i.e., does not contain any nonterminal symbols. 
+"""
 isterminal(grammar::Grammar, rule_index::Int) = grammar.isterminal[rule_index]
+
+"""
+    iseval(grammar::Grammar)
+
+Returns true if any production rules in grammar contain the special _() eval function.
+"""
 iseval(grammar::Grammar) = any(grammar.iseval)
+
+"""
+    iseval(grammar::Grammar, rule_index::Int)
+
+Returns true if the production rule at rule_index contains the special _() eval function.
+"""
 iseval(grammar::Grammar, index::Int) = grammar.iseval[index]
+
+"""
+    nchildren(grammar::Grammar, rule_index::Int)
+
+Returns the number of children (nonterminals) of the production rule at rule_index.
+"""
 nchildren(grammar::Grammar, rule_index::Int) = length(grammar.childtypes[rule_index])
+
+"""
+    max_arity(grammar::Grammar)
+
+Returns the maximum arity (number of children) over all production rules in the grammar. 
+"""
 max_arity(grammar::Grammar) = maximum(length(cs) for cs in grammar.childtypes)
 
 
 """
     RuleNode
 
-INSERT DOCS HERE
+Type for representing nodes in an expression tree.
 """
 struct RuleNode
     ind::Int # index in grammar
@@ -141,9 +206,32 @@ RuleNode(ind::Int) = RuleNode(ind, Nullable{Any}(), RuleNode[])
 RuleNode(ind::Int, children::Vector{RuleNode}) = RuleNode(ind, Nullable{Any}(), children)
 RuleNode(ind::Int, _val::Any) = RuleNode(ind, Nullable{Any}(_val), RuleNode[])
 
+"""
+    return_types(grammar::Grammar, node::RuleNode)
+
+Returns the return type in the production rule used by node. 
+"""
 return_type(grammar::Grammar, node::RuleNode) = grammar.types[node.ind]
+
+"""
+    child_types(grammar::Grammar, node::RuleNode)
+
+Returns the list of child types in the production rule used by node. 
+"""
 child_types(grammar::Grammar, node::RuleNode) = grammar.childtypes[node.ind]
+
+"""
+    isterminal(grammar::Grammar, node::RuleNode)
+
+Returns true if the production rule used by node is terminal, i.e., does not contain any nonterminal symbols. 
+"""
 isterminal(grammar::Grammar, node::RuleNode) = grammar.isterminal[node.ind]
+
+"""
+    nchildren(grammar::Grammar, node::RuleNode)
+
+Returns the number of children in the production rule used by node. 
+"""
 nchildren(grammar::Grammar, node::RuleNode) = length(child_types(grammar, node))
 
 """
@@ -210,6 +298,12 @@ function Base.length(root::RuleNode)
     end
     return retval
 end
+
+"""
+    depth(root::RuleNode)
+
+Return the depth of the expression tree rooted at root. 
+"""
 function depth(root::RuleNode)
     retval = 1
     for c in root.children
@@ -218,12 +312,19 @@ function depth(root::RuleNode)
     return retval
 end
 
-
 """
     get_executable(rulenode::RuleNode, grammar::Grammar)
 
-INSERT DOCS HERE
+Returns the Expr contained in expression tree with root rulenode.  The returned Expr can be executed using eval().
 """
+function get_executable(rulenode::RuleNode, grammar::Grammar)
+    root = !isnull(rulenode._val) ?
+        get(rulenode._val) : deepcopy(grammar.rules[rulenode.ind])
+    if !grammar.isterminal[rulenode.ind] # not terminal
+        root = _get_executable(root, rulenode, grammar)
+    end
+    return root
+end
 function _get_executable(expr::Expr, rulenode::RuleNode, grammar::Grammar)
     j = 0
     stack = Expr[expr]
@@ -256,15 +357,12 @@ function _get_executable(typ::Symbol, rulenode::RuleNode, grammar::Grammar)
     end
     retval
 end
-function get_executable(rulenode::RuleNode, grammar::Grammar)
-    root = !isnull(rulenode._val) ?
-        get(rulenode._val) : deepcopy(grammar.rules[rulenode.ind])
-    if !grammar.isterminal[rulenode.ind] # not terminal
-        root = _get_executable(root, rulenode, grammar)
-    end
-    return root
-end
 
+"""
+    eval(rulenode::RuleNode, grammar::Grammar)
+
+Evaluate the expression tree with root rulenode.
+"""
 Core.eval(rulenode::RuleNode, grammar::Grammar) = eval(Main, get_executable(rulenode, grammar))
 Core.eval(grammar::Grammar, index::Int) = eval(Main, grammar.rules[index].args[2])
 function Base.display(rulenode::RuleNode, grammar::Grammar)
@@ -354,6 +452,12 @@ struct NodeLoc
     parent::RuleNode
     i::Int
 end
+
+"""
+    root_node_loc(root::RuleNode)
+
+Returns a NodeLoc pointing to the root node.
+"""
 root_node_loc(root::RuleNode) = NodeLoc(root, 0)
 
 """
@@ -532,6 +636,11 @@ function _next_state!(node::RuleNode, grammar::Grammar, max_depth::Int)
     end
 end
 
+"""
+    ExpressionIterator(grammar::Grammar, max_depth::Int, sym::Symbol) 
+
+An iterator over all possible expressions of a grammar up to max_depth with start symbol sym.
+"""
 mutable struct ExpressionIterator
     grammar::Grammar
     max_depth::Int
@@ -570,6 +679,12 @@ function Base.next(iter::ExpressionIterator, state::Tuple{RuleNode,Bool})
     state = (node, worked)
     return (item, state)
 end
+
+"""
+    count_expressions(grammar::Grammar, max_depth::Int, sym::Symbol) 
+
+Count the number of possible expressions of a grammar up to max_depth with start symbol sym.
+"""
 function count_expressions(grammar::Grammar, max_depth::Int, sym::Symbol)
     retval = 0
     for root_rule in grammar[sym]
@@ -586,9 +701,15 @@ function count_expressions(grammar::Grammar, max_depth::Int, sym::Symbol)
     end
     return retval
 end
+
+"""
+    count_expressions(iter::ExpressionIterator) 
+
+Count the number of possible expressions in the expression iterator.
+"""
 count_expressions(iter::ExpressionIterator) = count_expressions(iter.grammar, iter.max_depth, iter.sym)
 
-# AbstractTrees interface
+# Interface to AbstractTrees.jl
 AbstractTrees.children(node::RuleNode) = node.children
 AbstractTrees.printnode(io::IO, node::RuleNode) = print(io, tnode.ind)
 
