@@ -315,7 +315,7 @@ end
 """
     get_executable(rulenode::RuleNode, grammar::Grammar)
 
-Returns the Expr contained in expression tree with root rulenode.  The returned Expr can be executed using eval().
+Returns the executable julia expression represented in the expression tree with root rulenode.  The returned expression can be evaluated using eval().
 """
 function get_executable(rulenode::RuleNode, grammar::Grammar)
     root = !isnull(rulenode._val) ?
@@ -711,7 +711,7 @@ count_expressions(iter::ExpressionIterator) = count_expressions(iter.grammar, it
 
 # Interface to AbstractTrees.jl
 AbstractTrees.children(node::RuleNode) = node.children
-AbstractTrees.printnode(io::IO, node::RuleNode) = print(io, tnode.ind)
+AbstractTrees.printnode(io::IO, node::RuleNode) = print(io, node.ind)
 
 
 end # module
