@@ -97,6 +97,24 @@ end
 
 let
     grammar = @grammar begin
+        R = R + R
+        R = 1
+    end
+
+    root = RuleNode(1, [RuleNode(1, [RuleNode(2), RuleNode(2)]), 
+                            RuleNode(1, [RuleNode(2), RuleNode(2)])])
+
+    @test node_depth(root, root) == 1
+    @test node_depth(root, root.children[1]) == 2
+    @test node_depth(root, root.children[2]) == 2
+    @test node_depth(root, root.children[1].children[1]) == 3
+    @test node_depth(root, root.children[1].children[2]) == 3
+    @test node_depth(root, root.children[2].children[1]) == 3
+    @test node_depth(root, root.children[2].children[2]) == 3
+end
+
+let
+    grammar = @grammar begin
         Real = x
         Real = Real * Real
         Real = f(Real)

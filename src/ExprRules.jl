@@ -16,6 +16,7 @@ export
         @grammar,
         max_arity,
         depth,
+        node_depth,
         isterminal,
         iseval,
         return_type,
@@ -312,6 +313,20 @@ function depth(root::RuleNode)
         retval = max(retval, depth(c)+1)
     end
     return retval
+end
+
+"""
+    node_depth(root::RuleNode, node::RuleNode)
+
+Return the depth of node for an expression tree rooted at root.  Depth is 1 when root == node.
+"""
+function node_depth(root::RuleNode, node::RuleNode)
+    root == node && return 1
+    c_max = 0
+    for c in root.children
+        c_max = max(c_max, node_depth(c, node))
+    end
+    c_max > 0 ? c_max+1 : 0
 end
 
 """
