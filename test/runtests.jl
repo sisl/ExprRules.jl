@@ -39,6 +39,64 @@ end
 
 let
     grammar = @grammar begin
+        R = A
+        A = B
+        B = 1
+    end
+
+    rulenode = rand(RuleNode, grammar, :R)
+    @test contains_returntype(rulenode, grammar, :R, 1)
+    @test contains_returntype(rulenode, grammar, :R, 2)
+    @test contains_returntype(rulenode, grammar, :R, 3)
+    @test contains_returntype(rulenode, grammar, :A, 1) == false
+    @test contains_returntype(rulenode, grammar, :A, 2)
+    @test contains_returntype(rulenode, grammar, :A, 3)
+    @test contains_returntype(rulenode, grammar, :B, 1) == false
+    @test contains_returntype(rulenode, grammar, :B, 2) == false
+    @test contains_returntype(rulenode, grammar, :B, 3)
+    
+    sample(rulenode, :R, grammar, 1)
+    sample(rulenode, :R, grammar, 2)
+    sample(rulenode, :R, grammar, 3)
+    sample(rulenode, :A, grammar, 2)
+    sample(rulenode, :A, grammar, 3)
+    sample(rulenode, :B, grammar, 3)
+
+    completed = false
+    try
+        sample(rulenode, :B, grammar, 2)
+        completed = true
+    catch
+        completed = false
+    end
+    @test !completed #should throw an error for not found
+
+    @test length(unique([sample(rulenode, 1) for i=1:10])) == 1
+    @test length(unique([sample(rulenode, 2) for i=1:10])) == 2
+    @test length(unique([sample(rulenode, 3) for i=1:10])) == 3
+
+    @test length(unique([sample(NodeLoc, rulenode, 1) for i=1:10])) == 1
+    @test length(unique([sample(NodeLoc, rulenode, 2) for i=1:10])) == 2
+    @test length(unique([sample(NodeLoc, rulenode, 3) for i=1:10])) == 3
+
+    @test sample(NodeLoc, rulenode, :R, grammar, 1) == NodeLoc(rulenode, 0)
+    @test sample(NodeLoc, rulenode, :R, grammar, 2) == NodeLoc(rulenode, 0)
+    @test sample(NodeLoc, rulenode, :R, grammar, 3) == NodeLoc(rulenode, 0)
+    @test sample(NodeLoc, rulenode, :A, grammar, 2) == NodeLoc(rulenode, 1) 
+    @test sample(NodeLoc, rulenode, :A, grammar, 3) == NodeLoc(rulenode, 1) 
+
+    completed = false
+    try
+        sample(NodeLoc, rulenode, :A, grammar, 1)
+        completed = true
+    catch
+        completed = false
+    end
+    @test !completed #should throw an error for not found
+end
+
+let
+    grammar = @grammar begin
         Real = x
         Real = Real * Real
         Real = f(Real)
