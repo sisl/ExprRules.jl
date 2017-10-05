@@ -321,12 +321,12 @@ end
 Return the depth of node for an expression tree rooted at root.  Depth is 1 when root == node.
 """
 function node_depth(root::RuleNode, node::RuleNode)
-    root == node && return 1
-    c_max = 0
+    root === node && return 1
     for c in root.children
-        c_max = max(c_max, node_depth(c, node))
+        d = node_depth(c, node)
+        d > 0 && (return d+1)
     end
-    c_max > 0 ? c_max+1 : 0
+    return 0
 end
 
 """
