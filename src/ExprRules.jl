@@ -685,11 +685,26 @@ Base.iteratorsize(::ExpressionIterator) = Base.SizeUnknown()
 Base.eltype(::ExpressionIterator) = RuleNode
 Base.done(iter::ExpressionIterator, state::Tuple{RuleNode,Bool}) = !state[2]
 function Base.start(iter::ExpressionIterator)
-    node = RuleNode(iter.grammar[iter.sym][1])
-    if isterminal(iter.grammar, node)
+    grammar, sym, max_depth = iter.grammar, iter.sym, iter.max_depth
+    node = RuleNode(grammar[sym][1])
+    if isterminal(grammar, node)
         return (node, true)
     else
-        return _next_state!(node, iter.grammar, iter.max_depth)
+        node, worked =  _next_state!(node, grammar, max_depth)
+        while !worked
+            # increment root's rule
+            rules = grammar[sym]
+            i = findfirst(rules, node.ind)
+            if i < length(rules)
+                node, worked = RuleNode(rules[i+1]), true
+                if !isterminal(grammar, node)
+                    node, worked = _next_state!(node, grammar, max_depth)
+                end
+            else
+                break
+            end
+        end
+        return (node, worked)
     end
 end
 function Base.next(iter::ExpressionIterator, state::Tuple{RuleNode,Bool})

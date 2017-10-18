@@ -269,6 +269,11 @@ let
     end
 
     ###
+    iter = ExpressionIterator(grammar, 1, :R)
+    @test all(isequal(a,b) for (a,b) in zip(collect(iter), [
+        RuleNode(2), RuleNode(3)]))
+    @test count_expressions(grammar, 1, :R) == 2
+    
 
     iter = ExpressionIterator(grammar, 2, :R)
     state = start(iter)
