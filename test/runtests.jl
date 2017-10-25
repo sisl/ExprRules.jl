@@ -352,7 +352,6 @@ let
     @test all(dmap .== [2, 1, 2, 0])
     @test mindepth(grammar, :x, dmap) == 1
     @test mindepth(grammar, :y, dmap) == 0
-    @test mindepth(grammar, 1, dmap) == 2
 
     node = rand(RuleNode, grammar, :y, dmap, 0)
     @test node == RuleNode(4)

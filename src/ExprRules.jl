@@ -785,21 +785,31 @@ count_expressions(iter::ExpressionIterator) = count_expressions(iter.grammar, it
 AbstractTrees.children(node::RuleNode) = node.children
 AbstractTrees.printnode(io::IO, node::RuleNode) = print(io, node.ind)
 
+"""
+    mindepth_map(grammar::Grammar)
+
+Returns the minimum depth achievable for each production rule, dmap.
+"""
 function mindepth_map(grammar::Grammar)
     dmap0 = Int[isterminal(grammar,i) ? 0 : typemax(Int)/2 for i in eachindex(grammar.rules)]
     dmap1 = Vector{Int}(length(grammar.rules))
     while dmap0 != dmap1
         for i in eachindex(grammar.rules)
-            dmap1[i] = mindepth(grammar, i, dmap0)
+            dmap1[i] = _mindepth(grammar, i, dmap0)
         end
         dmap1, dmap0 = dmap0, dmap1
     end
     dmap0
 end
-function mindepth(grammar::Grammar, rule_index::Int, dmap::AbstractVector{Int})
+function _mindepth(grammar::Grammar, rule_index::Int, dmap::AbstractVector{Int})
     isterminal(grammar, rule_index) && return 0
     return 1 + maximum([mindepth(grammar, ctyp, dmap) for ctyp in child_types(grammar, rule_index)])
 end
+"""
+    mindepth(grammar::Grammar, typ::Symbol, dmap::AbstractVector{Int})
+
+Returns the minimum depth achievable for a given nonterminal symbol 
+"""
 function mindepth(grammar::Grammar, typ::Symbol, dmap::AbstractVector{Int})
     return minimum(dmap[grammar.bytype[typ]])
 end
