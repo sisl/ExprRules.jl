@@ -27,7 +27,9 @@ export
         get_executable,
         sample,
         root_node_loc,
-        count_expressions
+        count_expressions,
+        mindepth_map,
+        mindepth
 
 """
     isterminal(rule::Any, types::AbstractVector{Symbol})
@@ -413,6 +415,26 @@ function Base.rand(::Type{RuleNode}, grammar::Grammar, typ::Symbol, max_depth::I
     end
     return rulenode
 end
+"""
+    rand(::Type{RuleNode}, grammar::Grammar, typ::Symbol, dmap::AbstractVector{Int}, max_depth::Int=10)
+
+Generates a random RuleNode of return type typ and maximum depth max_depth guided by a minimum depth map dmap.
+"""
+function Base.rand(::Type{RuleNode}, grammar::Grammar, typ::Symbol, dmap::AbstractVector{Int}, max_depth::Int=10)
+    rules = grammar[typ]
+    rule_index = StatsBase.sample([r for r in rules if dmap[r] ≤ max_depth])
+
+    rulenode = iseval(grammar, rule_index) ?
+        RuleNode(rule_index, eval(grammar, rule_index)) :
+        RuleNode(rule_index)
+
+    if !grammar.isterminal[rule_index]
+        for ch in child_types(grammar, rule_index)
+            push!(rulenode.children, rand(RuleNode, grammar, ch, dmap, max_depth-1))
+        end
+    end
+    return rulenode
+end
 
 mutable struct RuleNodeAndCount
     node::RuleNode
@@ -762,6 +784,25 @@ count_expressions(iter::ExpressionIterator) = count_expressions(iter.grammar, it
 # Interface to AbstractTrees.jl
 AbstractTrees.children(node::RuleNode) = node.children
 AbstractTrees.printnode(io::IO, node::RuleNode) = print(io, node.ind)
+
+function mindepth_map(grammar::Grammar)
+    dmap0 = Int[isterminal(grammar,i) ? 0 : typemax(Int)/2 for i in eachindex(grammar.rules)]
+    dmap1 = Vector{Int}(length(grammar.rules))
+    while dmap0 != dmap1
+        for i in eachindex(grammar.rules)
+            dmap1[i] = mindepth(grammar, i, dmap0)
+        end
+        dmap1, dmap0 = dmap0, dmap1
+    end
+    dmap0
+end
+function mindepth(grammar::Grammar, rule_index::Int, dmap::AbstractVector{Int})
+    isterminal(grammar, rule_index) && return 0
+    return 1 + maximum([mindepth(grammar, ctyp, dmap) for ctyp in child_types(grammar, rule_index)])
+end
+function mindepth(grammar::Grammar, typ::Symbol, dmap::AbstractVector{Int})
+    return minimum(dmap[grammar.bytype[typ]])
+end
 
 
 end # module

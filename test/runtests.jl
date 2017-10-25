@@ -339,3 +339,23 @@ let
     @test count_expressions(iter) == 6
     @test first(iter) == RuleNode(1)
 end
+
+let
+    grammar = @grammar begin
+        x = x + y
+        x = y + 1
+        y = x + y
+        y = 1
+    end
+
+    dmap = mindepth_map(grammar)
+    @test all(dmap .== [2, 1, 2, 0])
+    @test mindepth(grammar, :x, dmap) == 1
+    @test mindepth(grammar, :y, dmap) == 0
+    @test mindepth(grammar, 1, dmap) == 2
+
+    node = rand(RuleNode, grammar, :y, dmap, 0)
+    @test node == RuleNode(4)
+    node = rand(RuleNode, grammar, :x, dmap, 1)
+    @test node == RuleNode(2, [RuleNode(4)])
+end
