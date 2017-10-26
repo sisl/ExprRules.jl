@@ -280,6 +280,12 @@ function Base.hash(node::RuleNode, h::UInt=zero(UInt))
     return retval
 end
 
+function Base.show(io::IO, grammar::Grammar)
+    for i in eachindex(grammar.rules) 
+        println(io, i, ": ", grammar.types[i], " = ", grammar.rules[i])
+    end
+end
+
 function Base.show(io::IO, node::RuleNode; separator=",", last_child::Bool=false)
     print(io, node.ind)
     if !isempty(node.children)
