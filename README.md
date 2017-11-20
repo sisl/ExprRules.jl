@@ -6,6 +6,8 @@ Base functions for generating and optimizing Julia expressions from a grammar.
 
 Please see the [example notebook](http://nbviewer.ipython.org/github/sisl/ExprRules.jl/blob/master/examples/grammar.ipynb).
 
+Users may also be interested in expression optimization using [ExprOptimization.jl](https://github.com/sisl/ExprOptimization.jl).
+
 ## Maintainers:
 
 * Ritchie Lee, ritchie.lee@sv.cmu.edu
