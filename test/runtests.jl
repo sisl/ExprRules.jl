@@ -358,3 +358,14 @@ let
     node = rand(RuleNode, grammar, :x, dmap, 1)
     @test node == RuleNode(2, [RuleNode(4)])
 end
+
+let
+    grammar = @grammar begin
+        b = f(x) < n
+        x = true 
+        n = 15
+    end
+    node = RuleNode(1, [RuleNode(2),RuleNode(3)])
+    ex = get_executable(node, grammar)
+    @test ex == :(f(true) < 15)
+end

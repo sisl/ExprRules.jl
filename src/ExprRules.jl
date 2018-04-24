@@ -346,41 +346,36 @@ function get_executable(rulenode::RuleNode, grammar::Grammar)
     root = !isnull(rulenode._val) ?
         get(rulenode._val) : deepcopy(grammar.rules[rulenode.ind])
     if !grammar.isterminal[rulenode.ind] # not terminal
-        root = _get_executable(root, rulenode, grammar)
+        root,j = _get_executable(root, rulenode, grammar)
     end
     return root
 end
-function _get_executable(expr::Expr, rulenode::RuleNode, grammar::Grammar)
-    j = 0
-    stack = Expr[expr]
-    while !isempty(stack)
-        ex = pop!(stack)
-        for (k,arg) in enumerate(ex.args)
-            if haskey(grammar.bytype, arg)
-                child = rulenode.children[j+=1]
-                ex.args[k] = !isnull(child._val) ?
-                    get(child._val) : deepcopy(grammar.rules[child.ind])
-                if !isterminal(grammar, child)
-                    ex.args[k] = _get_executable(ex.args[k], child, grammar)
-                end
-            elseif isa(arg, Expr)
-                push!(stack, arg)
+function _get_executable(expr::Expr, rulenode::RuleNode, grammar::Grammar, j=0)
+    for (k,arg) in enumerate(expr.args)
+        if isa(arg, Expr)
+            expr.args[k],j = _get_executable(arg, rulenode, grammar, j)
+        elseif haskey(grammar.bytype, arg)
+            child = rulenode.children[j+=1]
+            expr.args[k] = !isnull(child._val) ?
+                get(child._val) : deepcopy(grammar.rules[child.ind])
+            if !isterminal(grammar, child)
+                expr.args[k],_ = _get_executable(expr.args[k], child, grammar, 0)
             end
         end
     end
-    return expr
+    return expr, j
 end
-function _get_executable(typ::Symbol, rulenode::RuleNode, grammar::Grammar)
+function _get_executable(typ::Symbol, rulenode::RuleNode, grammar::Grammar, j=0)
     retval = typ
     if haskey(grammar.bytype, typ)
         child = rulenode.children[1]
         retval = !isnull(child._val) ?
             get(child._val) : deepcopy(grammar.rules[child.ind])
         if !grammar.isterminal[child.ind]
-            retval = _get_executable(retval, child, grammar)
+            retval,_ = _get_executable(retval, child, grammar, 0)
         end
     end
-    retval
+    retval, j
 end
 
 """
