@@ -1,5 +1,7 @@
 using ExprRules
-using Base.Test
+using Test
+
+import Random: srand
 
 #=
 TESTS NEED TO BE MORE THOROUGHLY DEFINED
@@ -54,7 +56,7 @@ let
     @test contains_returntype(rulenode, grammar, :B, 1) == false
     @test contains_returntype(rulenode, grammar, :B, 2) == false
     @test contains_returntype(rulenode, grammar, :B, 3)
-    
+
     sample(rulenode, :R, grammar, 1)
     sample(rulenode, :R, grammar, 2)
     sample(rulenode, :R, grammar, 3)
@@ -82,8 +84,8 @@ let
     @test sample(NodeLoc, rulenode, :R, grammar, 1) == NodeLoc(rulenode, 0)
     @test sample(NodeLoc, rulenode, :R, grammar, 2) == NodeLoc(rulenode, 0)
     @test sample(NodeLoc, rulenode, :R, grammar, 3) == NodeLoc(rulenode, 0)
-    @test sample(NodeLoc, rulenode, :A, grammar, 2) == NodeLoc(rulenode, 1) 
-    @test sample(NodeLoc, rulenode, :A, grammar, 3) == NodeLoc(rulenode, 1) 
+    @test sample(NodeLoc, rulenode, :A, grammar, 2) == NodeLoc(rulenode, 1)
+    @test sample(NodeLoc, rulenode, :A, grammar, 3) == NodeLoc(rulenode, 1)
 
     completed = false
     try
@@ -101,7 +103,7 @@ let
         R = 1
     end
 
-    root = RuleNode(1, [RuleNode(1, [RuleNode(2), RuleNode(2)]), 
+    root = RuleNode(1, [RuleNode(1, [RuleNode(2), RuleNode(2)]),
                             RuleNode(1, [RuleNode(2), RuleNode(2)])])
 
     @test node_depth(root, root) == 1
@@ -197,7 +199,7 @@ let
     rulenode = rand(RuleNode, grammar, :Real, 3)
     hash(rulenode)
 
-    eval(rulenode, grammar)
+    Core.eval(rulenode, grammar)
 
     srand(0)
     sample(rulenode)
@@ -273,7 +275,7 @@ let
     @test all(isequal(a,b) for (a,b) in zip(collect(iter), [
         RuleNode(2), RuleNode(3)]))
     @test count_expressions(grammar, 1, :R) == 2
-    
+
 
     iter = ExpressionIterator(grammar, 2, :R)
     state = start(iter)
@@ -362,7 +364,7 @@ end
 let
     grammar = @grammar begin
         b = f(x) < n
-        x = true 
+        x = true
         n = 15
     end
     node = RuleNode(1, [RuleNode(2),RuleNode(3)])
