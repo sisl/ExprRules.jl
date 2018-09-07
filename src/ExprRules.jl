@@ -3,7 +3,6 @@ __precompile__()
 module ExprRules
 
 import TreeView: walk_tree
-import Random: srand
 using StatsBase
 using AbstractTrees
 using Nullables
