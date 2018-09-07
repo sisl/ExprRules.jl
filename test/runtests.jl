@@ -1,7 +1,5 @@
 using ExprRules
-using Test
-
-import Random: srand
+using Test, Random
 
 #=
 TESTS NEED TO BE MORE THOROUGHLY DEFINED
@@ -136,7 +134,7 @@ end
 
 x = 3
 let
-    srand(0)
+    Random.seed!(0)
 
     grammar = @grammar begin
         Real = Base.rand()
@@ -201,20 +199,20 @@ let
 
     Core.eval(rulenode, grammar)
 
-    srand(0)
+    Random.seed!(0)
     sample(rulenode)
 
-    srand(1)
+    Random.seed!(1)
     sample(rulenode, :Real, grammar)
 
-    srand(2)
+    Random.seed!(2)
     loc = sample(NodeLoc, rulenode)
     get(rulenode, loc)
 
-    srand(3)
+    Random.seed!(3)
     insert!(rulenode, loc, rand(RuleNode, grammar, :Real, 3))
 
-    srand(4)
+    Random.seed!(4)
     rulenode = RuleNode(3, [RuleNode(4), RuleNode(5)])
     for i in 1 : 10
         loc = sample(NodeLoc, rulenode, :Real, grammar)
@@ -278,9 +276,10 @@ let
 
 
     iter = ExpressionIterator(grammar, 2, :R)
-    state = start(iter)
-    @test !done(iter, state)
-    @test isequal(first(iter), RuleNode(1, [RuleNode(2), RuleNode(2)]))
+    x0 = iterate(iter)
+    @test x0 != nothing
+    item, state = x0
+    @test isequal(item, RuleNode(1, [RuleNode(2), RuleNode(2)]))
     @test all(isequal(a,b) for (a,b) in zip(collect(iter), [
         RuleNode(1, [RuleNode(2), RuleNode(2)]),
         RuleNode(1, [RuleNode(2), RuleNode(3)]),

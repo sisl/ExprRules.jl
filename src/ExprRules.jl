@@ -710,12 +710,12 @@ mutable struct ExpressionIterator
 end
 Base.IteratorSize(::ExpressionIterator) = Base.SizeUnknown()
 Base.eltype(::ExpressionIterator) = RuleNode
-Base.done(iter::ExpressionIterator, state::Tuple{RuleNode,Bool}) = !state[2]
-function Base.start(iter::ExpressionIterator)
+
+function Base.iterate(iter::ExpressionIterator)
     grammar, sym, max_depth = iter.grammar, iter.sym, iter.max_depth
     node = RuleNode(grammar[sym][1])
     if isterminal(grammar, node)
-        return (node, true)
+        return (deepcopy(node), node)
     else
         node, worked =  _next_state!(node, grammar, max_depth)
         while !worked
@@ -731,13 +731,13 @@ function Base.start(iter::ExpressionIterator)
                 break
             end
         end
-        return (node, worked)
+        return worked ? (deepcopy(node), node) : nothing
     end
 end
-function Base.next(iter::ExpressionIterator, state::Tuple{RuleNode,Bool})
+
+function Base.iterate(iter::ExpressionIterator, state::RuleNode)
     grammar, max_depth = iter.grammar, iter.max_depth
-    item = deepcopy(state[1])
-    node, worked = _next_state!(state[1], grammar, max_depth)
+    node, worked = _next_state!(state, grammar, max_depth)
 
     while !worked
         # increment root's rule
@@ -752,9 +752,7 @@ function Base.next(iter::ExpressionIterator, state::Tuple{RuleNode,Bool})
             break
         end
     end
-
-    state = (node, worked)
-    return (item, state)
+    return worked ? (deepcopy(node), node) : nothing
 end
 
 """
