@@ -399,7 +399,7 @@ Core.eval(grammar::Grammar, index::Int) = Core.eval(Main, grammar.rules[index].a
 
 Evaluate the expression ex using symbol table tab 
 """
-Core.eval(tab::SymbolTable, ex::Expr) = interpret(tab, ex)
+Core.eval(tab::SymbolTable, ex) = interpret(tab, ex)
 function Base.display(rulenode::RuleNode, grammar::Grammar)
     root = get_executable(rulenode, grammar)
     if isa(root, Expr)
