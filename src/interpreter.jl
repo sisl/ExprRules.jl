@@ -14,7 +14,7 @@ export SymbolTable, interpret
 const SymbolTable = Dict{Symbol,Any}
 
 interpret(tab::SymbolTable, x::Any) = x
-interpret(tab::SymbolTable, s::Symbol) = get(tab, s, getfield(Main, s))
+interpret(tab::SymbolTable, s::Symbol) = haskey(tab,s) ? tab[s] : getfield(Main, s)
 
 function interpret(tab::SymbolTable, ex::Expr)
     interpret(tab, ex, Val{ex.head})

@@ -806,7 +806,7 @@ Returns the minimum depth achievable for each production rule, dmap.
 """
 function mindepth_map(grammar::Grammar)
     dmap0 = Int[isterminal(grammar,i) ? 0 : typemax(Int)/2 for i in eachindex(grammar.rules)]
-    dmap1 = Vector{Int}(undef, length(grammar.rules))
+    dmap1 = fill(-1, length(grammar.rules)) 
     while dmap0 != dmap1
         for i in eachindex(grammar.rules)
             dmap1[i] = _mindepth(grammar, i, dmap0)
@@ -844,16 +844,23 @@ end
 _add_to_symboltable!(tab::SymbolTable, rule::Any, mod::Module) = nothing
 function _add_to_symboltable!(tab::SymbolTable, rule::Expr, mod::Module)
     if rule.head == :call && !iseval(rule)
-        _add_to_symboltable!(tab, rule.args[1], mod)
+        s = rule.args[1]
+        if !_add_to_symboltable!(tab, s, mod)
+            #warn about missing functions
+            @warn "Unable to add function $s to symbol table"  
+        end
     end
 end
 function _add_to_symboltable!(tab::SymbolTable, s::Symbol, mod::Module)
     if isdefined(mod, s)
         tab[s] = getfield(mod, s)
+        return true
     elseif isdefined(Main, s)
         tab[s] = getfield(Main, s)
+        return true
+    else
+        return false
     end
-    #else don't add
 end
 
 
