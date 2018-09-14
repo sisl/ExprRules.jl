@@ -27,7 +27,7 @@ function interpret(tab::SymbolTable, ex::Expr, ::Type{Val{:&&}})
 end
 function interpret(tab::SymbolTable, ex::Expr, ::Type{Val{:call}})
     f = interpret(tab, ex.args[1])
-    result = call_func(Val{length(ex.args)}, f, tab, ex.args)
+    result = call_func(tab, ex.args...)
     result
 end
 function interpret(tab::SymbolTable, ex::Expr, ::Type{Val{:(=)}})
@@ -45,42 +45,35 @@ function interpret(tab::SymbolTable, ex::Expr, x)
 end
 
 #unroll for performance and avoid excessive allocations
-function call_func(::Type{Val{2}}, f::Function, tab::SymbolTable, args)
-    f(interpret(tab, args[2]))
+function call_func(tab::SymbolTable, f, x1)
+    func = interpret(tab,f)
+    func(interpret(tab,x1))
 end
-function call_func(::Type{Val{3}}, f::Function, tab::SymbolTable, args)
-    f(interpret(tab, args[2]),
-        interpret(tab, args[3]))
+function call_func(tab::SymbolTable, f, x1, x2)
+    func = interpret(tab,f)
+    func(interpret(tab, x1),
+        interpret(tab, x2))
 end
-function call_func(::Type{Val{4}}, f::Function, tab::SymbolTable, args)
-    f(interpret(tab, args[2]),
-        interpret(tab, args[3]),
-        interpret(tab, args[4]))
+function call_func(tab::SymbolTable, f, x1, x2, x3)
+    func = interpret(tab,f)
+    func(interpret(tab, x1),
+        interpret(tab, x2),
+       interpret(tab, x3))
 end
-function call_func(::Type{Val{5}}, f::Function, tab::SymbolTable, args)
-    f(interpret(tab, args[2]),
-        interpret(tab, args[3]),
-        interpret(tab, args[4]),
-        interpret(tab, args[5]))
+function call_func(tab::SymbolTable, f, x1, x2, x3, x4)
+    func = interpret(tab,f)
+    func(interpret(tab, x1),
+        interpret(tab, x2),
+       interpret(tab, x3),
+       interpret(tab, x4))
 end
-function call_func(::Type{Val{6}}, f::Function, tab::SymbolTable, args)
-    f(interpret(tab, args[2]),
-        interpret(tab, args[3]),
-        interpret(tab, args[4]),
-        interpret(tab, args[5]),
-        interpret(tab, args[6]))
-end
-function call_func(::Type{Val{7}}, f::Function, tab::SymbolTable, args)
-    f(interpret(tab, args[2]),
-        interpret(tab, args[3]),
-        interpret(tab, args[4]),
-        interpret(tab, args[5]),
-        interpret(tab, args[6]),
-        interpret(tab, args[7]))
-end
-function call_func(::Any, f::Function, tab::SymbolTable, args)
-    args = [interpret(tab, args[i]) for i = 2:lastindex(args)]
-    f(args...)
+function call_func(tab::SymbolTable, f, x1, x2, x3, x4, x5)
+    func = interpret(tab,f)
+    func(interpret(tab, x1),
+        interpret(tab, x2),
+       interpret(tab, x3),
+       interpret(tab, x4),
+       interpret(tab, x5))
 end
 
 end #module
