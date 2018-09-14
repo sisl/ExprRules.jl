@@ -388,12 +388,17 @@ function _get_executable(typ::Symbol, rulenode::RuleNode, grammar::Grammar, j=0)
 end
 
 """
-    eval(rulenode::RuleNode, grammar::Grammar)
+    Core.eval(rulenode::RuleNode, grammar::Grammar)
 
 Evaluate the expression tree with root rulenode.
 """
 Core.eval(rulenode::RuleNode, grammar::Grammar) = Core.eval(Main, get_executable(rulenode, grammar))
 Core.eval(grammar::Grammar, index::Int) = Core.eval(Main, grammar.rules[index].args[2])
+"""
+    Core.eval(tab::SymbolTable, ex::Expr) 
+
+Evaluate the expression ex using symbol table tab 
+"""
 Core.eval(tab::SymbolTable, ex::Expr) = interpret(tab, ex)
 function Base.display(rulenode::RuleNode, grammar::Grammar)
     root = get_executable(rulenode, grammar)
@@ -823,6 +828,12 @@ function mindepth(grammar::Grammar, typ::Symbol, dmap::AbstractVector{Int})
     return minimum(dmap[grammar.bytype[typ]])
 end
 
+"""
+    Interpreter.SymbolTable(grammar::Grammar, mod::Module=Main)
+
+Returns a symbol table populated with mapping from symbols in grammar to
+symbols in module mod or Main, if defined.
+"""
 function Interpreter.SymbolTable(grammar::Grammar, mod::Module=Main)
     tab = SymbolTable()
     for rule in grammar.rules
