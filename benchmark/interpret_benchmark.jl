@@ -33,7 +33,7 @@ function loss2(tree::RuleNode, grammar::Grammar)
     los = 0.0
     for y = -1.0:0.1:1.0
         S[:x] = y
-        los += abs2(Core.eval(S, ex) - gt(x))
+        los += abs2(Core.eval(S, ex) - gt(y))
     end
     mean(los)
 end
