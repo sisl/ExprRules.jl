@@ -118,7 +118,7 @@ let
         Real = x
         Real = Real * Real
         Real = f(Real)
-        Real = _(Base.rand(1.0:5.0))
+        Real = _(rand(1.0:5.0))
         Real = A | B | g(Real)
         Real = 1 | 2 | 3
         Real = |(4:6)
@@ -137,7 +137,7 @@ let
     Random.seed!(0)
 
     grammar = @grammar begin
-        Real = Base.rand()
+        Real = rand()
         Real = x
         Real = Real + Real
         Real = 3.0
@@ -182,7 +182,7 @@ let
     @test  isequal(rulenode, RuleNode(3, [RuleNode(2), RuleNode(1)]))
     @test !isequal(rulenode, RuleNode(1))
     @test !isequal(rulenode, RuleNode(3, [RuleNode(1), RuleNode(2)]))
-    @test string(get_executable(rulenode, grammar)) == string(:(x + Base.rand()))
+    @test string(get_executable(rulenode, grammar)) == string(:(x + rand()))
 
     @test contains_returntype(rulenode, grammar, :Real)
     @test !contains_returntype(rulenode, grammar, :Bool)
@@ -198,6 +198,13 @@ let
     hash(rulenode)
 
     Core.eval(rulenode, grammar)
+
+    ex = get_executable(rulenode, grammar)
+    S = SymbolTable()
+    interpret(S, ex) 
+    Core.eval(S, ex)
+    S = SymbolTable(grammar, Main)
+    Core.eval(S, ex)
 
     Random.seed!(0)
     sample(rulenode)

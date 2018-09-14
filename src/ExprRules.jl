@@ -30,7 +30,13 @@ export
         root_node_loc,
         count_expressions,
         mindepth_map,
-        mindepth
+        mindepth,
+
+        SymbolTable,
+        interpret
+
+include("interpreter.jl")
+using .Interpreter
 
 """
     isterminal(rule::Any, types::AbstractVector{Symbol})
@@ -388,6 +394,7 @@ Evaluate the expression tree with root rulenode.
 """
 Core.eval(rulenode::RuleNode, grammar::Grammar) = Core.eval(Main, get_executable(rulenode, grammar))
 Core.eval(grammar::Grammar, index::Int) = Core.eval(Main, grammar.rules[index].args[2])
+Core.eval(tab::SymbolTable, ex::Expr) = interpret(tab, ex)
 function Base.display(rulenode::RuleNode, grammar::Grammar)
     root = get_executable(rulenode, grammar)
     if isa(root, Expr)
@@ -815,6 +822,29 @@ Returns the minimum depth achievable for a given nonterminal symbol
 function mindepth(grammar::Grammar, typ::Symbol, dmap::AbstractVector{Int})
     return minimum(dmap[grammar.bytype[typ]])
 end
+
+function Interpreter.SymbolTable(grammar::Grammar, mod::Module=Main)
+    tab = SymbolTable()
+    for rule in grammar.rules
+        _add_to_symboltable!(tab, rule, mod)
+    end
+    tab
+end
+_add_to_symboltable!(tab::SymbolTable, rule::Any, mod::Module) = nothing
+function _add_to_symboltable!(tab::SymbolTable, rule::Expr, mod::Module)
+    if rule.head == :call && !iseval(rule)
+        _add_to_symboltable!(tab, rule.args[1], mod)
+    end
+end
+function _add_to_symboltable!(tab::SymbolTable, s::Symbol, mod::Module)
+    if isdefined(mod, s)
+        tab[s] = getfield(mod, s)
+    elseif isdefined(Main, s)
+        tab[s] = getfield(Main, s)
+    end
+    #else don't add
+end
+
 
 
 end # module
