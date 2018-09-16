@@ -39,6 +39,10 @@ function interpret(tab::SymbolTable, ex::Expr)
 end
 
 #unroll for performance and avoid excessive allocations
+function call_func(tab::SymbolTable, f)
+    func = interpret(tab,f)
+    func()
+end
 function call_func(tab::SymbolTable, f, x1)
     func = interpret(tab,f)
     func(interpret(tab,x1))

@@ -5,7 +5,6 @@ module ExprRules
 import TreeView: walk_tree
 using StatsBase
 using AbstractTrees
-using Nullables
 
 export
         Grammar,
@@ -211,12 +210,12 @@ Type for representing nodes in an expression tree.
 """
 struct RuleNode
     ind::Int # index in grammar
-    _val::Nullable{Any} #value of _() evals
+    _val::Any  #value of _() evals
     children::Vector{RuleNode}
 end
-RuleNode(ind::Int) = RuleNode(ind, Nullable{Any}(), RuleNode[])
-RuleNode(ind::Int, children::Vector{RuleNode}) = RuleNode(ind, Nullable{Any}(), children)
-RuleNode(ind::Int, _val::Any) = RuleNode(ind, Nullable{Any}(_val), RuleNode[])
+RuleNode(ind::Int) = RuleNode(ind, missing, RuleNode[])
+RuleNode(ind::Int, children::Vector{RuleNode}) = RuleNode(ind, missing, children)
+RuleNode(ind::Int, _val::Any) = RuleNode(ind, _val, RuleNode[])
 
 """
     return_types(grammar::Grammar, node::RuleNode)
@@ -264,23 +263,14 @@ function contains_returntype(node::RuleNode, grammar::Grammar, sym::Symbol, maxd
     end
     return false
 end
-
 function Base.:(==)(A::RuleNode, B::RuleNode)
-    if A.ind != B.ind ||
-      (!isnull(A._val) && isnull(B._val)) ||
-      ( isnull(A._val) && !isnull(B._val)) ||
-      (!isnull(A._val) && !isnull(B._val) && A._val == B._val)
-
-        return false
-    else
-        for (a,b) in zip(A.children, B.children)
-            if !isequal(a, b)
-                return false
-            end
-        end
-        return true
-    end
+    missing_A, missing_B = ismissing(A._val), ismissing(B._val)
+    (A.ind == B.ind) &&
+        ((missing_A && missing_B) || ((!missing_A && !missing_B) && (A._val == B._val))) &&
+        (length(A.children) == length(B.children)) && #required because zip doesn't check lengths
+        all(isequal(a,b) for (a,b) in zip(A.children, B.children))
 end
+
 function Base.hash(node::RuleNode, h::UInt=zero(UInt))
     retval = hash(node.ind, h)
     for child in node.children
@@ -352,7 +342,7 @@ end
 Returns the executable julia expression represented in the expression tree with root rulenode.  The returned expression can be evaluated using eval().
 """
 function get_executable(rulenode::RuleNode, grammar::Grammar)
-    root = !isnull(rulenode._val) ?
+    root = !ismissing(rulenode._val) ?
         get(rulenode._val) : deepcopy(grammar.rules[rulenode.ind])
     if !grammar.isterminal[rulenode.ind] # not terminal
         root,j = _get_executable(root, rulenode, grammar)
@@ -365,7 +355,7 @@ function _get_executable(expr::Expr, rulenode::RuleNode, grammar::Grammar, j=0)
             expr.args[k],j = _get_executable(arg, rulenode, grammar, j)
         elseif haskey(grammar.bytype, arg)
             child = rulenode.children[j+=1]
-            expr.args[k] = !isnull(child._val) ?
+            expr.args[k] = !ismissing(child._val) ?
                 get(child._val) : deepcopy(grammar.rules[child.ind])
             if !isterminal(grammar, child)
                 expr.args[k],_ = _get_executable(expr.args[k], child, grammar, 0)
@@ -378,7 +368,7 @@ function _get_executable(typ::Symbol, rulenode::RuleNode, grammar::Grammar, j=0)
     retval = typ
     if haskey(grammar.bytype, typ)
         child = rulenode.children[1]
-        retval = !isnull(child._val) ?
+        retval = !ismissing(child._val) ?
             get(child._val) : deepcopy(grammar.rules[child.ind])
         if !grammar.isterminal[child.ind]
             retval,_ = _get_executable(retval, child, grammar, 0)
