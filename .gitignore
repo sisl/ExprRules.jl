@@ -7,3 +7,5 @@
 *.swp
 *.swo
 
+# notebook backups from ipynb 
+.ipynb_checkpoints
