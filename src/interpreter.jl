@@ -74,4 +74,21 @@ function call_func(tab::SymbolTable, f, x1, x2, x3, x4, x5)
        interpret(tab, x5))
 end
 
+### Raw interpret, no symbol table
+function interpret(ex::Expr, M::Module=Main)
+    result = if ex.head == :call
+        call_func(M, ex.args...)
+    elseif ex.head == :vect
+        ex.args
+    else
+        Core.eval(M, ex)
+    end
+end
+call_func(M::Module, f::Symbol) = getproperty(M,f)()
+call_func(M::Module, f::Symbol, x1) = getproperty(M,f)f(x1)
+call_func(M::Module, f::Symbol, x1, x2) = getproperty(M,f)(x1, x2)
+call_func(M::Module, f::Symbol, x1, x2, x3) = getproperty(M,f)(x1, x2, x3)
+call_func(M::Module, f::Symbol, x1, x2, x3, x4) = getproperty(M,f)(x1, x2, x3, x4)
+call_func(M::Module, f::Symbol, x1, x2, x3, x4, x5) = getproperty(M,f)(x1, x2, x3, x4, x5)
+
 end #module
