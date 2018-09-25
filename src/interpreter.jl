@@ -18,7 +18,6 @@ interpret(tab::SymbolTable, s::Symbol) = haskey(tab,s) ? tab[s] : getfield(Main,
 
 function interpret(tab::SymbolTable, ex::Expr)
     result = if ex.head == :call
-        f = interpret(tab, ex.args[1])
         call_func(tab, ex.args...)
     elseif ex.head == :||
         interpret(tab, ex.args[1]) || interpret(tab, ex.args[2])
