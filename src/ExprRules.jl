@@ -5,6 +5,7 @@ module ExprRules
 import TreeView: walk_tree
 using StatsBase
 using AbstractTrees
+using DataStructures  #NodeRecycler
 
 export
         Grammar,
@@ -32,7 +33,11 @@ export
         mindepth,
 
         SymbolTable,
-        interpret
+        interpret,
+
+        NodeRecycler,
+        recycle!
+
 
 include("interpreter.jl")
 using .Interpreter
@@ -208,7 +213,7 @@ max_arity(grammar::Grammar) = maximum(length(cs) for cs in grammar.childtypes)
 
 Type for representing nodes in an expression tree.
 """
-struct RuleNode
+mutable struct RuleNode
     ind::Int # index in grammar
     _val::Any  #value of _() evals
     children::Vector{RuleNode}
@@ -216,6 +221,9 @@ end
 RuleNode(ind::Int) = RuleNode(ind, nothing, RuleNode[])
 RuleNode(ind::Int, children::Vector{RuleNode}) = RuleNode(ind, nothing, children)
 RuleNode(ind::Int, _val::Any) = RuleNode(ind, _val, RuleNode[])
+
+include("recycler.jl")
+
 
 """
     return_types(grammar::Grammar, node::RuleNode)
@@ -403,19 +411,20 @@ end
 
 Generates a random RuleNode of return type typ and maximum depth max_depth.
 """
-function Base.rand(::Type{RuleNode}, grammar::Grammar, typ::Symbol, max_depth::Int=10)
+function Base.rand(::Type{RuleNode}, grammar::Grammar, typ::Symbol, max_depth::Int=10, 
+    bin::Union{NodeRecycler,Nothing}=nothing)
     rules = grammar[typ]
     rule_index = max_depth > 1 ?
         StatsBase.sample(rules) :
         StatsBase.sample(filter(r->isterminal(grammar,r), rules))
 
     rulenode = iseval(grammar, rule_index) ?
-        RuleNode(rule_index, Core.eval(grammar, rule_index)) :
-        RuleNode(rule_index)
+        RuleNode(bin, rule_index, Core.eval(grammar, rule_index)) :
+        RuleNode(bin, rule_index)
 
     if !grammar.isterminal[rule_index]
         for ch in child_types(grammar, rule_index)
-            push!(rulenode.children, rand(RuleNode, grammar, ch, max_depth-1))
+            push!(rulenode.children, rand(RuleNode, grammar, ch, max_depth-1, bin))
         end
     end
     return rulenode
@@ -425,17 +434,18 @@ end
 
 Generates a random RuleNode of return type typ and maximum depth max_depth guided by a minimum depth map dmap.
 """
-function Base.rand(::Type{RuleNode}, grammar::Grammar, typ::Symbol, dmap::AbstractVector{Int}, max_depth::Int=10)
+function Base.rand(::Type{RuleNode}, grammar::Grammar, typ::Symbol, dmap::AbstractVector{Int}, 
+    max_depth::Int=10, bin::Union{NodeRecycler,Nothing}=nothing)
     rules = grammar[typ]
     rule_index = StatsBase.sample(filter(r->dmap[r] ≤ max_depth, rules))
 
     rulenode = iseval(grammar, rule_index) ?
-        RuleNode(rule_index, Core.eval(grammar, rule_index)) :
-        RuleNode(rule_index)
+        RuleNode(bin, rule_index, Core.eval(grammar, rule_index)) :
+        RuleNode(bin, rule_index)
 
     if !grammar.isterminal[rule_index]
         for ch in child_types(grammar, rule_index)
-            push!(rulenode.children, rand(RuleNode, grammar, ch, dmap, max_depth-1))
+            push!(rulenode.children, rand(RuleNode, grammar, ch, dmap, max_depth-1, bin))
         end
     end
     return rulenode
@@ -851,7 +861,5 @@ function _add_to_symboltable!(tab::SymbolTable, s::Symbol, mod::Module)
         return false
     end
 end
-
-
 
 end # module

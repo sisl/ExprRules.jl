@@ -377,3 +377,21 @@ let
     ex = get_executable(node, grammar)
     @test ex == :(f(true) < 15)
 end
+
+let
+    grammar = @grammar begin
+        R = R + R
+        R = 1
+    end
+
+    root = RuleNode(1, [RuleNode(1, [RuleNode(2), RuleNode(2)]),
+                            RuleNode(1, [RuleNode(2), RuleNode(2)])])
+
+    bin = NodeRecycler(20)
+    recycle!(bin, root)
+
+    RuleNode(bin, 1)
+    RuleNode(bin, 1, true)
+    RuleNode(bin, 1, [RuleNode(1)])
+    RuleNode(bin, 1, true, [RuleNode(1)]) 
+end
