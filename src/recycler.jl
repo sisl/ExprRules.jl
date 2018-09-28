@@ -36,9 +36,24 @@ function RuleNode(bin::NodeRecycler, ind::Int, _val::Any, children::Vector{RuleN
     return node
 end
 
-function recycle!(bin::NodeRecycler, root::RuleNode)
-    push!(bin, root)
+Base.deepcopy(bin::Nothing, root::RuleNode) = deepcopy(root)
+function Base.deepcopy(bin::NodeRecycler, root::RuleNode)
+    root2 = RuleNode(bin, root.ind, root._val)
     for child in root.children
-        recycle!(bin, child)
+        push!(root2.children, deepcopy(bin, child)) 
+    end
+    root2
+end
+
+recycle!(bin::Nothing, root::RuleNode) = root
+function recycle!(bin::NodeRecycler, root::RuleNode)
+    if isfull(bin) 
+        empty!(root.children)
+    else 
+        push!(bin, root)
+        while !isempty(root.children)
+            child = pop!(root.children)
+            recycle!(bin, child)
+        end
     end
 end
