@@ -14,64 +14,47 @@ export SymbolTable, interpret
 const SymbolTable = Dict{Symbol,Any}
 
 interpret(tab::SymbolTable, x::Any) = x
-interpret(tab::SymbolTable, s::Symbol) = haskey(tab,s) ? tab[s] : getproperty(Main, s)
+interpret(tab::SymbolTable, s::Symbol) = tab[s] 
 
 function interpret(tab::SymbolTable, ex::Expr)
-    result = if ex.head == :call
-        call_func(tab, ex.args...)
+    args = ex.args
+    if ex.head == :call
+        len = length(args)
+        #unroll for performance and avoid excessive allocations
+        if len == 1
+            return tab[args[1]]()
+        elseif len == 2
+            return tab[args[1]](interpret(tab,args[2]))
+        elseif len == 3
+            return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]))
+        elseif len == 4
+            return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]), interpret(tab,args[4]))
+        elseif len == 5
+            return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]), interpret(tab,args[4]),
+                                   interpret(tab,args[5]))
+        elseif len == 6
+            return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]), interpret(tab,args[4]),
+                                   interpret(tab,args[5]), interpret(tab,args[6]))
+        else
+            error("Interpreter supports up to 5 function arguments only") 
+        end
     elseif ex.head == :||
-        interpret(tab, ex.args[1]) || interpret(tab, ex.args[2])
-    elseif ex.head == :&&
-        interpret(tab, ex.args[1]) && interpret(tab, ex.args[2])
+        return (interpret(tab, args[1]) || interpret(tab, args[2]))
+    elseif head == :&&
+        return (interpret(tab, args[1]) && interpret(tab, args[2]))
     elseif ex.head == :(=)
-        tab[ex.args[1]] = interpret(tab, ex.args[2]) #assignments done to symboltable
+        return (tab[args[1]] = interpret(tab, args[2])) #assignments made to symboltable
     elseif ex.head == :block
         result = nothing
-        for x in ex.args
+        for x in args
             result = interpret(tab, x)
         end
-        result
+        return result
     else
         error("Expression type not supported")
     end
-    result
 end
 
-#unroll for performance and avoid excessive allocations
-function call_func(tab::SymbolTable, f)
-    func = interpret(tab,f)
-    func()
-end
-function call_func(tab::SymbolTable, f, x1)
-    func = interpret(tab,f)
-    func(interpret(tab,x1))
-end
-function call_func(tab::SymbolTable, f, x1, x2)
-    func = interpret(tab,f)
-    func(interpret(tab, x1),
-        interpret(tab, x2))
-end
-function call_func(tab::SymbolTable, f, x1, x2, x3)
-    func = interpret(tab,f)
-    func(interpret(tab, x1),
-        interpret(tab, x2),
-       interpret(tab, x3))
-end
-function call_func(tab::SymbolTable, f, x1, x2, x3, x4)
-    func = interpret(tab,f)
-    func(interpret(tab, x1),
-        interpret(tab, x2),
-       interpret(tab, x3),
-       interpret(tab, x4))
-end
-function call_func(tab::SymbolTable, f, x1, x2, x3, x4, x5)
-    func = interpret(tab,f)
-    func(interpret(tab, x1),
-        interpret(tab, x2),
-       interpret(tab, x3),
-       interpret(tab, x4),
-       interpret(tab, x5))
-end
 
 ### Raw interpret, no symbol table
 function interpret(ex::Expr, M::Module=Main)

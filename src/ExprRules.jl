@@ -840,19 +840,25 @@ function Interpreter.SymbolTable(grammar::Grammar, mod::Module=Main)
     end
     tab
 end
-_add_to_symboltable!(tab::SymbolTable, rule::Any, mod::Module) = nothing
+_add_to_symboltable!(tab::SymbolTable, rule::Any, mod::Module) = true
 function _add_to_symboltable!(tab::SymbolTable, rule::Expr, mod::Module)
     if rule.head == :call && !iseval(rule)
         s = rule.args[1]
         if !_add_to_symboltable!(tab, s, mod)
-            #warn about missing functions
             @warn "Unable to add function $s to symbol table"  
         end
+        for s in rule.args[2:end]  #nested exprs
+            _add_to_symboltable!(tab, s, mod)
+        end
     end
+    return true
 end
 function _add_to_symboltable!(tab::SymbolTable, s::Symbol, mod::Module)
     if isdefined(mod, s)
         tab[s] = getfield(mod, s)
+        return true
+    elseif isdefined(Base, s)
+        tab[s] = getfield(Base, s)
         return true
     elseif isdefined(Main, s)
         tab[s] = getfield(Main, s)
