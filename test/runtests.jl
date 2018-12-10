@@ -200,10 +200,9 @@ let
     Core.eval(rulenode, grammar)
 
     ex = get_executable(rulenode, grammar)
-    S = SymbolTable()
-    interpret(S, ex) 
-    Core.eval(S, ex)
+    eval(ex)
     S = SymbolTable(grammar, Main)
+    interpret(S, ex) 
     Core.eval(S, ex)
 
     Random.seed!(0)
