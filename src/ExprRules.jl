@@ -152,6 +152,24 @@ end
 Base.getindex(grammar::Grammar, typ::Symbol) = grammar.bytype[typ]
 
 """
+   append!(grammar1::Grammar, grammar2::Grammar)
+
+Appends the production rules of grammar2 to grammar1.
+"""
+function Base.append!(grammar1::Grammar, grammar2::Grammar)
+    N = length(grammar1.rules)
+    append!(grammar1.rules, grammar2.rules)
+    append!(grammar1.types, grammar2.types)
+    append!(grammar1.isterminal, grammar2.isterminal)
+    append!(grammar1.iseval, grammar2.iseval)
+    append!(grammar1.childtypes, grammar2.childtypes)
+    for (s,v) in grammar2.bytype
+        grammar1.bytype[s] = append!(get(grammar1.bytype, s, Int[]), N .+ v)
+    end
+    grammar1
+end
+
+"""
     nonterminals(grammar::Grammar)
 
 Returns a list of nonterminals in the grammar.

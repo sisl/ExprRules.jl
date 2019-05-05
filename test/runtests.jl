@@ -394,3 +394,17 @@ let
     RuleNode(bin, 1, [RuleNode(1)])
     RuleNode(bin, 1, true, [RuleNode(1)]) 
 end
+
+let
+    grammar1 = @grammar begin
+        x = x | y | a 
+        y = a | b 
+    end
+    grammar2 = @grammar begin
+        y = y | z
+        z = a | b | c
+    end
+
+    grammar = deepcopy(grammar1)
+    append!(grammar, grammar2)
+end
