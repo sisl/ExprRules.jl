@@ -21,23 +21,11 @@ function interpret(tab::SymbolTable, ex::Expr)
     if ex.head == :call
         len = length(args)
         #unroll for performance and avoid excessive allocations
-        if len == 1
-            return tab[args[1]]()
-        elseif len == 2
-            return tab[args[1]](interpret(tab,args[2]))
-        elseif len == 3
-            return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]))
-        elseif len == 4
-            return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]), interpret(tab,args[4]))
-        elseif len == 5
-            return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]), interpret(tab,args[4]),
-                                   interpret(tab,args[5]))
-        elseif len == 6
-            return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]), interpret(tab,args[4]),
-                                   interpret(tab,args[5]), interpret(tab,args[6]))
-        else
-            error("Interpreter supports up to 5 function arguments only") 
+        arguments = ()
+        for i in 2:len
+            arguments = (arguments..., interpret(tab, args[i]))
         end
+        return tab[args[1]](arguments...)
     elseif ex.head == :||
         return (interpret(tab, args[1]) || interpret(tab, args[2]))
     elseif head == :&&
