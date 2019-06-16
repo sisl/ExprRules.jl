@@ -36,7 +36,7 @@ function interpret(tab::SymbolTable, ex::Expr)
             return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]), interpret(tab,args[4]),
                                    interpret(tab,args[5]), interpret(tab,args[6]))
         else
-            error("Interpreter supports up to 5 function arguments only") 
+            return tab[args[1]](interpret.(Ref(tab),args[2:end])...)
         end
     elseif ex.head == :||
         return (interpret(tab, args[1]) || interpret(tab, args[2]))
