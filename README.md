@@ -10,8 +10,7 @@ Users may also be interested in expression optimization using [ExprOptimization.
 
 ## Maintainers:
 
-* Ritchie Lee, ritchie.lee@sv.cmu.edu
-* Tim Wheeler, tawheeler@stanford.edu
+* Ritchie Lee, ritchie@ritchielee.net 
 * Mykel Kochenderfer, mykel@stanford.edu
 
 [![Build Status](https://travis-ci.org/sisl/ExprRules.jl.svg?branch=master)](https://travis-ci.org/sisl/ExprRules.jl) [![Coverage Status](https://coveralls.io/repos/sisl/ExprRules.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/sisl/ExprRules.jl?branch=master)
