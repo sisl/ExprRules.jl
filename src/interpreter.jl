@@ -40,7 +40,7 @@ function interpret(tab::SymbolTable, ex::Expr)
         end
     elseif ex.head == :||
         return (interpret(tab, args[1]) || interpret(tab, args[2]))
-    elseif head == :&&
+    elseif ex.head == :&&
         return (interpret(tab, args[1]) && interpret(tab, args[2]))
     elseif ex.head == :(=)
         return (tab[args[1]] = interpret(tab, args[2])) #assignments made to symboltable
