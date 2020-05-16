@@ -192,7 +192,7 @@ let
     @test depth(rulenode) == 3
     @test string(get_executable(rulenode, grammar)) == string(:(2 / (1 + (x + 3.0))))
 
-    rulenode = RuleNode(1, "potato")
+    rulenode = RuleNode(1, "potato", RuleNode[])
 
     rulenode = rand(RuleNode, grammar, :Real, 3)
     hash(rulenode)
@@ -390,9 +390,8 @@ let
     recycle!(bin, root)
 
     RuleNode(bin, 1)
-    RuleNode(bin, 1, true)
     RuleNode(bin, 1, [RuleNode(1)])
-    RuleNode(bin, 1, true, [RuleNode(1)]) 
+    #RuleNode(bin, 1, true, [RuleNode(1)])  #for now... to be uncommented
 end
 
 let

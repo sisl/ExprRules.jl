@@ -225,20 +225,18 @@ Returns the maximum arity (number of children) over all production rules in the 
 """
 max_arity(grammar::Grammar) = maximum(length(cs) for cs in grammar.childtypes)
 
-
 """
     RuleNode
 
 Type for representing nodes in an expression tree.
 """
-mutable struct RuleNode
+mutable struct RuleNode{T}
     ind::Int # index in grammar
-    _val::Any  #value of _() evals
+    _val::T  #value of _() evals
     children::Vector{RuleNode}
 end
-RuleNode(ind::Int) = RuleNode(ind, nothing, RuleNode[])
-RuleNode(ind::Int, children::Vector{RuleNode}) = RuleNode(ind, nothing, children)
-RuleNode(ind::Int, _val::Any) = RuleNode(ind, _val, RuleNode[])
+RuleNode(ind::Int) = RuleNode{Nothing}(ind, nothing, RuleNode[])
+RuleNode(ind::Int, children::Vector{<:RuleNode}) = RuleNode{Nothing}(ind, nothing, children)
 
 include("recycler.jl")
 
@@ -437,7 +435,7 @@ function Base.rand(::Type{RuleNode}, grammar::Grammar, typ::Symbol, max_depth::I
         StatsBase.sample(filter(r->isterminal(grammar,r), rules))
 
     rulenode = iseval(grammar, rule_index) ?
-        RuleNode(bin, rule_index, Core.eval(grammar, rule_index)) :
+        RuleNode(bin, rule_index, Core.eval(grammar, rule_index), RuleNode[]) :
         RuleNode(bin, rule_index)
 
     if !grammar.isterminal[rule_index]
@@ -458,7 +456,7 @@ function Base.rand(::Type{RuleNode}, grammar::Grammar, typ::Symbol, dmap::Abstra
     rule_index = StatsBase.sample(filter(r->dmap[r] ≤ max_depth, rules))
 
     rulenode = iseval(grammar, rule_index) ?
-        RuleNode(bin, rule_index, Core.eval(grammar, rule_index)) :
+        RuleNode(bin, rule_index, Core.eval(grammar, rule_index), RuleNode[]) :
         RuleNode(bin, rule_index)
 
     if !grammar.isterminal[rule_index]
