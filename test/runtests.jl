@@ -423,5 +423,7 @@ let
         Vector = exp.(Vector)
     end
     tab = SymbolTable(grammar)
-    @test interpret(tab, :(exp.([1, 2]))) == exp.([1, 2])
+    tree = RuleNode(2, [RuleNode(1)])
+    ex = get_executable(tree, grammar)
+    interpret(tab, ex) == exp.([1, 2])
 end
