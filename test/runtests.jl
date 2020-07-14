@@ -416,3 +416,12 @@ let
     interpret(S, ex) 
     Core.eval(S, ex)
 end
+
+let 
+    grammar = @grammar begin
+        Vector = [1, 2]
+        Vector = exp.(Vector)
+    end
+    tab = SymbolTable(grammar)
+    @test interpret(tab, :(exp.([1, 2]))) == exp.([1, 2])
+end
