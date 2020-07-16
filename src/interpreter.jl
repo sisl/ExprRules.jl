@@ -39,7 +39,7 @@ function interpret(tab::SymbolTable, ex::Expr)
             return tab[args[1]](interpret.(Ref(tab),args[2:end])...)
         end
     elseif ex.head == :(.)
-        return Base.materialize(Base.broadcasted(Base.eval(args[1]), interpret(tab, args[2])...))
+        return Base.broadcast(Base.eval(args[1]), interpret(tab, args[2])...)
     elseif ex.head == :tuple
         return tuple(interpret.(Ref(tab), args)...)
     elseif ex.head == :vect
