@@ -11,4 +11,9 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 TreeView = "39424ebd-4cf3-5550-a685-96706a953f40"
 
 [compat]
+AbstractTrees = "0.3.3"
+DataStructures = "0.17.15"
+Nullables = "1.0.0"
+StatsBase = "0.33.0"
+TreeView = "0.3.1"
 julia = "1.0.0"
