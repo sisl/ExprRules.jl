@@ -1,15 +1,12 @@
 language: julia
 sudo: required
 dist: trusty
+coveralls: true
 julia:
   - 1.0
   - 1.1
+  - 1.5
 notifications:
   email: false
 before_install:
   - sudo apt-get -qq update
-#script: # use the default script section which is equivalent to the following
-#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-#  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("ExprRules"); Pkg.test("ExprRules"; coverage=true)'
-after_success:
-  - julia -e 'cd(Pkg.dir("ExprRules")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
