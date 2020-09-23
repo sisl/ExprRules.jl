@@ -56,6 +56,12 @@ function interpret(tab::SymbolTable, ex::Expr)
             result = interpret(tab, x)
         end
         return result
+    elseif ex.head == :if
+        if interpret(tab, args[1])
+            return interpret(tab, args[2])
+        else
+            return interpret(tab, args[3])
+        end
     else
         error("Expression type not supported")
     end
