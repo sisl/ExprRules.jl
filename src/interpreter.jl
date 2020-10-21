@@ -19,24 +19,36 @@ interpret(tab::SymbolTable, s::Symbol) = tab[s]
 function interpret(tab::SymbolTable, ex::Expr)
     args = ex.args
     if ex.head == :call
-        len = length(args)
-        #unroll for performance and avoid excessive allocations
-        if len == 1
-            return tab[args[1]]()
-        elseif len == 2
-            return tab[args[1]](interpret(tab,args[2]))
-        elseif len == 3
-            return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]))
-        elseif len == 4
-            return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]), interpret(tab,args[4]))
-        elseif len == 5
-            return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]), interpret(tab,args[4]),
-                                   interpret(tab,args[5]))
-        elseif len == 6
-            return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]), interpret(tab,args[4]),
-                                   interpret(tab,args[5]), interpret(tab,args[6]))
+        if ex.args[1] == Symbol(".&")
+            return (interpret(tab, args[2]) .& interpret(tab, args[3]))
+        elseif ex.args[1] == Symbol(".|")
+            return (interpret(tab, args[2]) .| interpret(tab, args[3]))
+        elseif ex.args[1] == Symbol(".==")
+            return (interpret(tab, args[2]) .== interpret(tab, args[3]))
+        elseif ex.args[1] == Symbol(".>=")
+            return (interpret(tab, args[2]) .>= interpret(tab, args[3]))
+        elseif ex.args[1] == Symbol(".<=")
+            return (interpret(tab, args[2]) .<= interpret(tab, args[3]))
         else
-            return tab[args[1]](interpret.(Ref(tab),args[2:end])...)
+            len = length(args)
+            #unroll for performance and avoid excessive allocations
+            if len == 1
+                return tab[args[1]]()
+            elseif len == 2
+                return tab[args[1]](interpret(tab,args[2]))
+            elseif len == 3
+                return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]))
+            elseif len == 4
+                return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]), interpret(tab,args[4]))
+            elseif len == 5
+                return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]), interpret(tab,args[4]),
+                                       interpret(tab,args[5]))
+            elseif len == 6
+                return tab[args[1]](interpret(tab,args[2]), interpret(tab,args[3]), interpret(tab,args[4]),
+                                       interpret(tab,args[5]), interpret(tab,args[6]))
+            else
+                return tab[args[1]](interpret.(Ref(tab),args[2:end])...)
+            end
         end
     elseif ex.head == :(.)
         return Base.broadcast(Base.eval(args[1]), interpret(tab, args[2])...)
