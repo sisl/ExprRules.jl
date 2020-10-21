@@ -429,6 +429,17 @@ let
 end
 
 let
+    grammar = @grammar begin
+        A = B
+        B = C
+        C = D
+        D = E
+        E = 1
+    end
+    rulenode = rand(RuleNode, grammar, :A, 1)
+end
+
+let
     S = SymbolTable(:x => [1,2,3], :y => [0,2,4], :b1 => [1,1,1], :b2=>[1,0,1])
     @test all(interpret(S, Meta.parse("x .<= y")) .== [false, true, true])
     @test all(interpret(S, Meta.parse("x .>= y")) .== [true, true, false])
