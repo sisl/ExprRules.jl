@@ -433,10 +433,12 @@ function Base.rand(::Type{RuleNode}, grammar::Grammar, typ::Symbol, max_depth::I
     bin::Union{NodeRecycler,Nothing}=nothing)
     rules = grammar[typ]
     
-    terminals = filter(r->isterminal(grammar,r), rules)
-    rule_index = max_depth > 1  || isempty(terminals) ?
-        StatsBase.sample(rules) :
-        StatsBase.sample(terminals)
+    if max_depth <= 1
+        terminals = filter(r->isterminal(grammar,r), rules)
+        rule_index = !isempty(terminals) ? StatsBase.sample(terminals) : StatsBase.sample(rules)
+    else    
+        rule_index = StatsBase.sample(rules)
+    end
 
     rulenode = iseval(grammar, rule_index) ?
         RuleNode(bin, rule_index, Core.eval(grammar, rule_index)) :
