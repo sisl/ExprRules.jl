@@ -427,3 +427,14 @@ let
     ex = get_executable(tree, grammar)
     interpret(tab, ex) == exp.([1, 2])
 end
+
+let
+    grammar = @grammar begin
+        A = B
+        B = C
+        C = D
+        D = E
+        E = 1
+    end
+    rulenode = rand(RuleNode, grammar, :A, 1)
+end

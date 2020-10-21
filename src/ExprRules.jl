@@ -432,9 +432,11 @@ Generates a random RuleNode of return type typ and maximum depth max_depth.
 function Base.rand(::Type{RuleNode}, grammar::Grammar, typ::Symbol, max_depth::Int=10, 
     bin::Union{NodeRecycler,Nothing}=nothing)
     rules = grammar[typ]
-    rule_index = max_depth > 1 ?
+    
+    terminals = filter(r->isterminal(grammar,r), rules)
+    rule_index = max_depth > 1  || isempty(terminals) ?
         StatsBase.sample(rules) :
-        StatsBase.sample(filter(r->isterminal(grammar,r), rules))
+        StatsBase.sample(terminals)
 
     rulenode = iseval(grammar, rule_index) ?
         RuleNode(bin, rule_index, Core.eval(grammar, rule_index)) :
