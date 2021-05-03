@@ -218,6 +218,18 @@ let
     Random.seed!(3)
     insert!(rulenode, loc, rand(RuleNode, grammar, :Real, 3))
 
+    node = RuleNode(1, [RuleNode(2), RuleNode(2)])
+    child_loc = NodeLoc(node, 1)
+    new = RuleNode(3)
+    inserted = insert!(node, child_loc, new)
+    @test node == inserted
+
+    node = RuleNode(1, [RuleNode(2), RuleNode(2)])
+    root_loc = NodeLoc(node, 0)
+    new = RuleNode(3)
+    inserted =  insert!(node, root_loc, new)
+    @test node == inserted
+
     Random.seed!(4)
     rulenode = RuleNode(3, [RuleNode(4), RuleNode(5)])
     for i in 1 : 10
