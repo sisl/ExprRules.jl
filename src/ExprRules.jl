@@ -576,7 +576,9 @@ function Base.insert!(root::RuleNode, loc::NodeLoc, rulenode::RuleNode)
     if loc.i > 0
         parent.children[i] = rulenode
     else
-        root = rulenode
+        root.ind = rulenode.ind
+        root._val = rulenode._val
+        root.children = rulenode.children
     end
     return root
 end
