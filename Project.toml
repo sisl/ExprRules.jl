@@ -1,7 +1,7 @@
 name = "ExprRules"
 uuid = "e7058ba0-a568-556c-b31a-209ee9d855a8"
 authors = ["Ritchie Lee <ritchie@ritchielee.net>", "Mykel Kochenderfer <mykel@stanford.edu>"]
-version = "0.4.2"
+version = "0.4.3"
 
 [deps]
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
