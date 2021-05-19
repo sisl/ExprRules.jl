@@ -1,7 +1,7 @@
 # ExprRules.jl
 [![Build Status](https://travis-ci.org/sisl/ExprRules.jl.svg?branch=master)](https://travis-ci.org/sisl/ExprRules.jl) [![Coverage Status](https://coveralls.io/repos/sisl/ExprRules.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/sisl/ExprRules.jl?branch=master)
 
-Functions for generating and optimizing Julia expressions from a grammar.
+Functions for declaring and working with grammars and expression trees in Julia.
 
 ## Usage
 
