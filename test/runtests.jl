@@ -498,5 +498,5 @@ let
     @test Core.eval(S, get_executable(rn[:slice_list_rc], grammar)) == mat[:, [r, c]]
     @test Core.eval(S, get_executable(rn[:slice_list_23rc], grammar)) == mat[[2, 3], [r, c]]
     @test Core.eval(S, get_executable(rn[:slice_list_rrc], grammar)) == mat[r, [r, c]]
-    @test Core.eval(S, get_executable(rn[:slice_list_comb], grammar)) -= mat[[r, c, 20], 2:4]
+    @test Core.eval(S, get_executable(rn[:slice_list_comb], grammar)) == mat[[r, c, 20], 2:4]
 end
