@@ -459,3 +459,44 @@ let
     @test all(interpret(S, Meta.parse("b1 .& b2")) .== [true, false, true])
     @test all(interpret(S, Meta.parse("b1 .| b2")) .== [true, true, true])
 end
+
+let
+    grammar = @grammar begin
+        all = mat[:, :]
+        col1 = mat[1, :]
+        row2 = mat[:, 2]
+        slice_34 = mat[3, 4]
+        slice_2r = mat[2:r, :]
+        slice_2c = mat[:, 2:c]
+        slice_r2c = mat[r, 2:c]
+        slice_2r2c = mat[2:r, 2:c]
+        slice_list_23 = mat[[2, 3], :]
+        slice_list_rc = mat[:, [r, c]]
+        slice_list_23rc = mat[[2, 3], [r, c]]
+        slice_list_rrc = mat[r, [r, c]]
+        slice_list_comb = mat[[r, c, 20], 2:4]
+    end
+    mat = reshape(1:100, (20, 5))
+    r, c = 5, 3
+
+    S = SymbolTable(grammar)
+    S[:mat] = mat
+    S[:r] = r
+    S[:c] = c
+    rn = Dict(
+        sym=>rand(RuleNode, grammar, sym) for sym in nonterminals(grammar)
+    )
+    @test Core.eval(S, get_executable(rn[:all], grammar)) == mat[:, :]
+    @test Core.eval(S, get_executable(rn[:col1], grammar)) == mat[1, :]
+    @test Core.eval(S, get_executable(rn[:row2], grammar)) == mat[:, 2]
+    @test Core.eval(S, get_executable(rn[:slice_34], grammar)) == mat[3, 4]
+    @test Core.eval(S, get_executable(rn[:slice_2r], grammar)) == mat[2:r, :]
+    @test Core.eval(S, get_executable(rn[:slice_2c], grammar)) == mat[:, 2:c]
+    @test Core.eval(S, get_executable(rn[:slice_r2c], grammar)) == mat[r, 2:c]
+    @test Core.eval(S, get_executable(rn[:slice_2r2c], grammar)) == mat[2:r, 2:c]
+    @test Core.eval(S, get_executable(rn[:slice_list_23], grammar)) == mat[[2, 3], :]
+    @test Core.eval(S, get_executable(rn[:slice_list_rc], grammar)) == mat[:, [r, c]]
+    @test Core.eval(S, get_executable(rn[:slice_list_23rc], grammar)) == mat[[2, 3], [r, c]]
+    @test Core.eval(S, get_executable(rn[:slice_list_rrc], grammar)) == mat[r, [r, c]]
+    @test Core.eval(S, get_executable(rn[:slice_list_comb], grammar)) -= mat[[r, c, 20], 2:4]
+end

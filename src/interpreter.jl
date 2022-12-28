@@ -29,6 +29,8 @@ function interpret(tab::SymbolTable, ex::Expr)
             return (interpret(tab, args[2]) .>= interpret(tab, args[3]))
         elseif ex.args[1] == Symbol(".<=")
             return (interpret(tab, args[2]) .<= interpret(tab, args[3]))
+        elseif ex.args[1] == :(:)
+            return interpret(tab, args[2]) : interpret(tab, args[3])
         else
             len = length(args)
             #unroll for performance and avoid excessive allocations
@@ -52,6 +54,9 @@ function interpret(tab::SymbolTable, ex::Expr)
         end
     elseif ex.head == :(.)
         return Base.broadcast(Base.eval(args[1]), interpret(tab, args[2])...)
+    elseif ex.head == :ref
+        slices = replace(args[2:end], :(:)=>:)
+        return interpret(tab, args[1])[interpret.(Ref(tab), slices)...]
     elseif ex.head == :tuple
         return tuple(interpret.(Ref(tab), args)...)
     elseif ex.head == :vect
