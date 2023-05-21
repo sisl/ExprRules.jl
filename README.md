@@ -1,5 +1,6 @@
 # ExprRules.jl
-[![Build Status](https://travis-ci.org/sisl/ExprRules.jl.svg?branch=master)](https://travis-ci.org/sisl/ExprRules.jl) [![Coverage Status](https://coveralls.io/repos/sisl/ExprRules.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/sisl/ExprRules.jl?branch=master)
+[![Build Status](https://github.com/sisl/ExprRules.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/sisl/ExprRules.jl/actions/workflows/CI.yml/)
+[![codecov](https://codecov.io/gh/sisl/ExprRules.jl/branch/master/graph/badge.svg?token=ZLMNVzDem0)](https://codecov.io/gh/sisl/ExprRules.jl)
 
 Functions for declaring and working with grammars and expression trees in Julia.
 
