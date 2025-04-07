@@ -1,7 +1,7 @@
 name = "ExprRules"
 uuid = "e7058ba0-a568-556c-b31a-209ee9d855a8"
 authors = ["Ritchie Lee <ritchie@ritchielee.net>", "Mykel Kochenderfer <mykel@stanford.edu>"]
-version = "0.4.4"
+version = "0.4.5"
 
 [deps]
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
@@ -10,7 +10,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 TreeView = "39424ebd-4cf3-5550-a685-96706a953f40"
 
 [compat]
-AbstractTrees = "0.2,0.3"
+AbstractTrees = "0.2,0.3,0.4"
 DataStructures = "0.17,0.18"
 StatsBase = "0.33"
 TreeView = "0.5"
