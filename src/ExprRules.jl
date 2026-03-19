@@ -296,7 +296,7 @@ function Base.:(==)(A::RuleNode, B::RuleNode)
         all(isequal(a,b) for (a,b) in zip(A.children, B.children))
 end
 
-function Base.hash(node::RuleNode, h::UInt=zero(UInt))
+function Base.hash(node::RuleNode, h::UInt)
     retval = hash(node.ind, h)
     for child in node.children
         retval = hash(child, retval)
